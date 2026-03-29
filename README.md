@@ -51,9 +51,12 @@ To generate your files locally, you need a Personal Access Token (PAT) with `pub
 
    Open `.env` and replace `your_token_here` with your GitHub PAT.
 
-3. **Run the script**
+3. **Initialize and run the project**
+
+   Before your very first run, clear any template example data, then start the script:
 
    ```bash
+   npm run clean
    npm start
    ```
 
@@ -65,7 +68,7 @@ GitHub Actions are disabled by default in repositories generated from a template
 
 2. Select the **Update Contributions** workflow and click **Run workflow** to execute the first sync manually.
 
-3. The workflow uses the built-in `GITHUB_TOKEN`. Once the manual run finishes, daily and monthly schedules will take over.
+3. The workflow uses the built-in `GITHUB_TOKEN`. Once the manual run finishes, daily and monthly schedules will take over automatically.
 
 ---
 
