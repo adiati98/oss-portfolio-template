@@ -76,9 +76,8 @@ GitHub Actions remain disabled by default in repositories generated from a templ
 
 After the script runs successfully, you can find your generated portfolio in the following locations:
 
-- **GitHub Markdown Portfolio:** Navigate to `contributions/markdown-generated/README.md`. This is the main "front page" of your logs on GitHub.
-- **Quarterly Logs:** Detailed breakdowns for every three months are stored in `contributions/markdown-generated/YYYY/`.
-- **Static Website Files:** If you are hosting a website, the ready-to-use HTML and CSS files are in `contributions/html-generated/`.
+- **GitHub Markdown Portfolio:** Navigate to `contributions/markdown-generated/README.md`. This is the main "front page" of your logs on GitHub. The detailed breakdowns for every three months are stored in `contributions/markdown-generated/YYYY/`.
+- **Static Website Files:** If you are hosting a website, the ready-to-use HTML files are in `contributions/html-generated/`.
 
 ---
 
