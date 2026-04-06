@@ -112,8 +112,11 @@ async function main() {
         fetchStartYear = currentYear - 1;
         console.log('Last month update - fetching last two years');
       } else {
-        fetchStartYear = typeof SINCE_YEAR !== 'undefined' ? SINCE_YEAR : fetchStartYear;
-        console.log('Older update - fetching all years');
+        fetchStartYear = Math.max(
+          typeof SINCE_YEAR !== 'undefined' ? SINCE_YEAR : 0,
+          fetchStartYear
+        );
+        console.log(`Older update - fetching from: ${fetchStartYear}`);
       }
     }
 

@@ -322,13 +322,14 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
   // Loop through each year from the start year to the current year.
   for (let year = startYear; year <= currentYear; year++) {
     console.log(`Fetching contributions for year: ${year}...`);
+    
     // Define the start and end dates for the year to use in API queries.
     const yearStart = `${year}-01-01T00:00:00Z`;
     const yearEnd = `${year + 1}-01-01T00:00:00Z`;
 
     // --- Fetch PRs authored by the user and merged in the given year ---
     const prs = await getAllPages(
-      `is:pr author:${GITHUB_USERNAME} is:merged merged:>=${yearStart} merged:<${yearEnd}`
+      `is:pr author:${GITHUB_USERNAME} is:merged merged:${yearStart}..${yearEnd}`
     );
 
     for (const pr of prs) {
@@ -375,7 +376,7 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
 
     // --- Fetch Issues authored by the user on other people's repositories ---
     const issues = await getAllPages(
-      `is:issue author:${GITHUB_USERNAME} -user:${GITHUB_USERNAME} created:>=${yearStart} created:<${yearEnd}`
+      `is:issue author:${GITHUB_USERNAME} -user:${GITHUB_USERNAME} created:${yearStart}..${yearEnd}`
     );
     for (const issue of issues) {
       if (seenUrls.issues.has(issue.html_url)) {
@@ -407,13 +408,13 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
     // Note: The GitHub search API doesn't support multiple 'closed-by' or 'merged-by' filters,
     // so we combine multiple queries and deduplicate the results.
     const reviewedByPrs = await getAllPages(
-      `is:pr reviewed-by:${GITHUB_USERNAME} -author:${GITHUB_USERNAME} updated:>=${yearStart} updated:<${yearEnd}`
+      `is:pr reviewed-by:${GITHUB_USERNAME} -author:${GITHUB_USERNAME} updated:${yearStart}..${yearEnd}`
     );
     const mergedByPrs = await getAllPages(
-      `is:pr merged-by:${GITHUB_USERNAME} -author:${GITHUB_USERNAME} updated:>=${yearStart} updated:<${yearEnd}`
+      `is:pr merged-by:${GITHUB_USERNAME} -author:${GITHUB_USERNAME} updated:${yearStart}..${yearEnd}`
     );
     const closedByPrs = await getAllPages(
-      `is:pr is:closed -author:${GITHUB_USERNAME} closed-by:${GITHUB_USERNAME} commenter:${GITHUB_USERNAME} closed:>=${yearStart} closed:<${yearEnd}`
+      `is:pr is:closed -author:${GITHUB_USERNAME} closed-by:${GITHUB_USERNAME} commenter:${GITHUB_USERNAME} closed:${yearStart}..${yearEnd}`
     );
 
     const combinedResults = [...reviewedByPrs, ...mergedByPrs, ...closedByPrs];
@@ -547,10 +548,10 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
 
     // --- Fetch Collaborations (PRs/Issues commented on by the user) ---
     const collaborationsPrs = await getAllPages(
-      `is:pr commenter:${GITHUB_USERNAME} -author:${GITHUB_USERNAME} -reviewed-by:${GITHUB_USERNAME} updated:>=${yearStart} updated:<${yearEnd}`
+      `is:pr commenter:${GITHUB_USERNAME} -author:${GITHUB_USERNAME} -reviewed-by:${GITHUB_USERNAME} updated:${yearStart}..${yearEnd}`
     );
     const collaborationsIssues = await getAllPages(
-      `is:issue commenter:${GITHUB_USERNAME} -author:${GITHUB_USERNAME} updated:>=${yearStart} updated:<${yearEnd}`
+      `is:issue commenter:${GITHUB_USERNAME} -author:${GITHUB_USERNAME} updated:${yearStart}..${yearEnd}`
     );
 
     const allCollaborations = [...collaborationsPrs, ...collaborationsIssues];
