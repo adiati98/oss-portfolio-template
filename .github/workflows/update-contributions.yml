@@ -1,11 +1,11 @@
-name: Demo Update Contributions
+name: Update Contributions
 
 on:
   schedule:
-    # Monthly full sync at 00:01 UTC on the 1st of the month
-    - cron: '1 0 1 * *'
-    # Daily update at 01:00 UTC
-    - cron: '0 1 * * *'
+    # Monthly full sync at 01:01 UTC on the 1st of the month (1h after main)
+    - cron: '1 1 1 * *'
+    # Daily update at 02:00 UTC (1h after main)
+    - cron: '0 2 * * *'
   workflow_dispatch:
 
 jobs:
@@ -33,7 +33,7 @@ jobs:
         run: |
           echo "github.event.schedule is ${{ github.event.schedule }}"
           # Check if the triggering schedule is the monthly cron
-          if [ "${{ github.event.schedule }}" = "1 0 1 * *" ]; then
+          if [ "${{ github.event.schedule }}" = "1 1 1 * *" ]; then
             echo "Running monthly full sync..."
             # Force the script to do a full run by deleting the cache files
             rm -f data/all-contributions.json
@@ -63,7 +63,7 @@ jobs:
           # Check if there are any changes to commit
           if ! git diff --staged --quiet; then
             # Use a different commit message based on the update type
-            if [ "${{ github.event.schedule }}" = "1 0 1 * *" ]; then
+            if [ "${{ github.event.schedule }}" = "1 1 1 * *" ]; then
                 git commit -m "docs: Monthly full sync [skip ci]"
             else
                 git commit -m "docs: Daily contributions update [skip ci]"
