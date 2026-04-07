@@ -1,35 +1,37 @@
 # 📈 Open Source Contributions Report
 
-Organized by calendar quarter, these reports track [**your-github-username**](https://github.com/your-github-username)'s external open source involvement since **2024**. This portfolio aggregates key community activities across Merged PRs, Issues, Reviewed PRs, Co-Authored PRs, and general Collaborations.
+Organized by calendar quarter, these reports track [**adiati98**](https://github.com/adiati98)'s external open source involvement. This portfolio aggregates key community activities across Merged PRs, Issues, Reviewed PRs, Co-Authored PRs, and general Collaborations.
 
 ---
 
 ## 📊 All-Time Impact Summary
 
-### 🚀 Total Contributions: **0**
+### 🚀 Total Contributions: **2259**
 
 | Context                    | Detail                     |
 | :------------------------- | :------------------------- |
-| 🏗️ **Unique Repositories** | **0** projects             |
-| 📅 **Active Since**        | **2024** (3 years tracked) |
+| 🏗️ **Unique Repositories** | **52** projects            |
+| 📅 **Active Since**        | **2019** (8 years tracked) |
 
 ### 🧩 Contribution Distribution
 
-| Category            | Progress                         | Count | Percentage |
-| :------------------ | :------------------------------- | :---- | :--------- |
-| **Merged PRs**      | `□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□` | 0     | 0.0%       |
-| **Issues**          | `□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□` | 0     | 0.0%       |
-| **Reviewed PRs**    | `□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□` | 0     | 0.0%       |
-| **Co-Authored PRs** | `□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□` | 0     | 0.0%       |
-| **Collaborations**  | `□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□` | 0     | 0.0%       |
+| Category            | Progress                         | Count   | Percentage |
+| :------------------ | :------------------------------- | :------ | :--------- |
+| **Merged PRs**      | `■■■■■■■□□□□□□□□□□□□□□□□□□□□□□□` | 508     | 22.5%      |
+| **Issues**          | `■■■■■■■□□□□□□□□□□□□□□□□□□□□□□□` | 500     | 22.1%      |
+| **Reviewed PRs**    | `■■■■■■■■■□□□□□□□□□□□□□□□□□□□□□` | **642** | **28.4%**  |
+| **Co-Authored PRs** | `■■■■□□□□□□□□□□□□□□□□□□□□□□□□□□` | 266     | 11.8%      |
+| **Collaborations**  | `■■■■■□□□□□□□□□□□□□□□□□□□□□□□□□` | 343     | 15.2%      |
 
 ### 🎯 Primary Focus Projects
 
-_No activity recorded yet._
+1. [**OpenSource-Communities/guestbook**](https://github.com/OpenSource-Communities/guestbook) (642 contributions)
+2. [**mautic/user-documentation**](https://github.com/mautic/user-documentation) (300 contributions)
+3. [**Virtual-Coffee/virtualcoffee.io**](https://github.com/Virtual-Coffee/virtualcoffee.io) (262 contributions)
 
-### 🎭 Collaboration Profile: Open Source Contributor
+### 🎭 Collaboration Profile: Community Mentor
 
-An active member of the global open source community.
+An expert advocate for code quality and peer development. Code review and technical guidance ensure high standards across the community.
 
 ---
 
@@ -52,8 +54,54 @@ Each quarterly report file (`Qx-YYYY.md` inside the year folders) provides a det
 
 ## 📂 Detailed Quarterly Reports
 
-_No detailed reports generated yet._
+### 2026
+
+- [Q2-2026](./2026/Q2-2026.md)
+- [Q1-2026](./2026/Q1-2026.md)
+
+### 2025
+
+- [Q4-2025](./2025/Q4-2025.md)
+- [Q3-2025](./2025/Q3-2025.md)
+- [Q2-2025](./2025/Q2-2025.md)
+- [Q1-2025](./2025/Q1-2025.md)
+
+### 2024
+
+- [Q4-2024](./2024/Q4-2024.md)
+- [Q3-2024](./2024/Q3-2024.md)
+- [Q2-2024](./2024/Q2-2024.md)
+- [Q1-2024](./2024/Q1-2024.md)
+
+### 2023
+
+- [Q4-2023](./2023/Q4-2023.md)
+- [Q3-2023](./2023/Q3-2023.md)
+- [Q2-2023](./2023/Q2-2023.md)
+- [Q1-2023](./2023/Q1-2023.md)
+
+### 2022
+
+- [Q4-2022](./2022/Q4-2022.md)
+- [Q3-2022](./2022/Q3-2022.md)
+- [Q2-2022](./2022/Q2-2022.md)
+- [Q1-2022](./2022/Q1-2022.md)
+
+### 2021
+
+- [Q4-2021](./2021/Q4-2021.md)
+- [Q3-2021](./2021/Q3-2021.md)
+- [Q2-2021](./2021/Q2-2021.md)
+
+### 2020
+
+- [Q4-2020](./2020/Q4-2020.md)
+
+### 2019
+
+- [Q4-2019](./2019/Q4-2019.md)
+- [Q3-2019](./2019/Q3-2019.md)
 
 ---
 
-_Report last generated on: 4/7/2026, 1:31:41 AM_
+_Report last generated on: 4/7/2026, 10:17:56 AM_
