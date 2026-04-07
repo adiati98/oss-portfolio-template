@@ -11,19 +11,26 @@ The content updates automatically via a Node.js script and a GitHub Actions work
 
 ## 🛠️ Quick Start Guide
 
-Follow these steps to set up your own automated contribution log.
+### 1. Repository Setup
 
-### Prerequisites
+Choose how you want to start your project:
 
-1. Click the **Use this template** button at the top of this repository to create your own copy.
-2. Clone your new repository to your local machine.
-3. Ensure [Node.js](https://nodejs.org/en) is installed and run:
+* **Option A:** Click **Use this template** at the top of this repository.
+* **Option B:** Click **Fork** to create a linked copy, then clone it to your local machine:
+
+  ```bash
+  git clone https://github.com/adiati98/oss-portfolio-template.git
+  ```
+  
+### 2. Environment Setup
+
+Ensure [Node.js](https://nodejs.org/en) is installed and run:
    
    ```bash
    npm ci
    ```
 
-### 1. Update Configuration
+### 3. Update Configuration
 
 Open `scripts/config/config.js` and and update your GitHub handle.
 
@@ -34,7 +41,8 @@ Open `scripts/config/config.js` and and update your GitHub handle.
 const GITHUB_USERNAME = 'your-github-username';
 ```
 
-### 2. Running Locally
+### 4. Running Locally
+
 To generate your files locally, you need a Personal Access Token (PAT) with `public_repo` scope.
 
 1. **Create `.env` file**
