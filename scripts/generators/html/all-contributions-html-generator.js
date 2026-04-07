@@ -1,18 +1,10 @@
 const fs = require('fs/promises');
 const path = require('path');
 const prettier = require('prettier');
-
-// Import the dedent utility
 const { dedent } = require('../../utils/dedent');
-
-// Import configuration
-const { BASE_DIR, SINCE_YEAR } = require('../../config/config');
-
-// Import navbar and footer
+const { BASE_DIR } = require('../../config/config');
 const { createNavHtml } = require('../../components/navbar');
 const { createFooterHtml } = require('../../components/footer');
-
-// Import favicon svg and constants
 const {
   RIGHT_ARROW_SVG,
   FAVICON_SVG_ENCODED,
@@ -20,8 +12,6 @@ const {
   PULL_REQUEST_LARGE_SVG,
   INFO_ICON_SVG,
 } = require('../../config/constants');
-
-// Import the style generator function
 const { getIndexStyleCss } = require('../css/style-generator');
 
 const HTML_OUTPUT_DIR_NAME = 'html-generated';
@@ -30,7 +20,6 @@ const rightArrowSvg = RIGHT_ARROW_SVG;
 
 /**
  * Determines the contributor's persona title and description.
- * Uses count-based logic with a priority system for tie-breaking.
  */
 function determinePersona(counts) {
   const { prCount, issueCount, reviewedPrCount, coAuthoredPrCount, collaborationCount } = counts;
@@ -89,7 +78,7 @@ function determinePersona(counts) {
  * Calculates aggregate totals from all contribution data and writes the
  * all-time contributions HTML report file.
  */
-async function createAllTimeContributions(finalContributions = []) {
+async function createAllTimeContributions(finalContributions = {}) {
   const htmlBaseDir = path.join(BASE_DIR, HTML_OUTPUT_DIR_NAME);
   const HTML_OUTPUT_PATH = path.join(htmlBaseDir, HTML_README_FILENAME);
 
@@ -99,12 +88,33 @@ async function createAllTimeContributions(finalContributions = []) {
   const issueCount = finalContributions.issues?.length || 0;
   const reviewedPrCount = finalContributions.reviewedPrs?.length || 0;
   const collaborationCount = finalContributions.collaborations?.length || 0;
-  const coAuthoredPrCount = Array.isArray(finalContributions.coAuthoredPrs)
-    ? finalContributions.coAuthoredPrs.length
-    : 0;
+  const coAuthoredPrs = Array.isArray(finalContributions.coAuthoredPrs)
+    ? finalContributions.coAuthoredPrs
+    : [];
+  const coAuthoredPrCount = coAuthoredPrs.length;
 
   const grandTotal =
     prCount + issueCount + reviewedPrCount + collaborationCount + coAuthoredPrCount;
+
+  const allItems = [
+    ...(finalContributions.pullRequests || []),
+    ...(finalContributions.issues || []),
+    ...(finalContributions.reviewedPrs || []),
+    ...coAuthoredPrs,
+    ...(finalContributions.collaborations || []),
+  ];
+
+  // --- DYNAMIC YEAR CALCULATION ---
+  // Find the earliest date in the dataset to determine "Active Since"
+  const yearsActive = allItems
+    .map((item) => new Date(item.date).getFullYear())
+    .filter((year) => !isNaN(year));
+
+  const earliestYear = yearsActive.length > 0 ? Math.min(...yearsActive) : new Date().getFullYear();
+  const currentYear = new Date().getFullYear();
+  const yearSpan = Math.max(1, currentYear - earliestYear + 1);
+  const yearlyAverage = (grandTotal / yearSpan).toFixed(0);
+
   const maxCount = Math.max(
     prCount,
     issueCount,
@@ -127,14 +137,6 @@ async function createAllTimeContributions(finalContributions = []) {
     collab: getStats(collaborationCount),
   };
 
-  const allItems = [
-    ...(finalContributions.pullRequests || []),
-    ...(finalContributions.issues || []),
-    ...(finalContributions.reviewedPrs || []),
-    ...(Array.isArray(finalContributions.coAuthoredPrs) ? finalContributions.coAuthoredPrs : []),
-    ...(finalContributions.collaborations || []),
-  ];
-
   const uniqueRepos = new Set(allItems.map((item) => item.repo));
   const totalUniqueRepos = uniqueRepos.size;
 
@@ -152,24 +154,14 @@ async function createAllTimeContributions(finalContributions = []) {
       ? topThreeRepos
           .map(([repo, count], idx) => {
             const isTop = idx === 0;
-
             const nameClass = isTop ? 'text-base font-black' : 'text-sm font-bold';
-
             const [owner, name] = repo.includes('/') ? repo.split('/') : ['', repo];
             const repoUrl = `https://github.com/${repo}`;
 
             return `
         <div class="flex flex-col sm:flex-row sm:items-start justify-between py-4 border-b border-slate-50 last:border-0 gap-3 sm:gap-4">
           <div class="flex flex-col min-w-0">
-            ${
-              owner
-                ? `
-              <span class="text-[10px] uppercase tracking-wider text-slate-400 font-mono leading-none mb-1">
-                ${owner}
-              </span>`
-                : ''
-            }
-            
+            ${owner ? `<span class="text-[10px] uppercase tracking-wider text-slate-400 font-mono leading-none mb-1">${owner}</span>` : ''}
             <a href="${repoUrl}" 
                target="_blank" 
                rel="noopener noreferrer" 
@@ -179,7 +171,6 @@ async function createAllTimeContributions(finalContributions = []) {
               ${name}
             </a>
           </div>
-          
           <div class="flex items-center shrink-0 mt-1 sm:mt-0">
             <span class="text-xs font-bold text-slate-400 whitespace-nowrap px-2 py-1 bg-slate-50 rounded-md border border-slate-100">
               ${count} contributions
@@ -223,7 +214,7 @@ ${navHtml}
             All-Time Contributions
           </h1>
           <p style="color: ${COLORS.text.secondary};" class="text-xl max-w-3xl mx-auto leading-relaxed">
-            Aggregated lifetime metrics and high-level performance across all tracked repositories since ${SINCE_YEAR}.
+            Aggregated lifetime metrics and high-level performance across all tracked repositories.
           </p>
         </header>
 
@@ -243,12 +234,12 @@ ${navHtml}
                   <p class="text-[10px] uppercase tracking-wider opacity-80 leading-tight mt-1">Repos</p>
                 </div>
                 <div class="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
-                  <div class="h-8 flex items-end"><p class="text-2xl sm:text-3xl font-bold leading-none">${(grandTotal / (new Date().getFullYear() - SINCE_YEAR + 1)).toFixed(0)}</p></div>
+                  <div class="h-8 flex items-end"><p class="text-2xl sm:text-3xl font-bold leading-none">${yearlyAverage}</p></div>
                   <p class="text-[10px] uppercase tracking-wider opacity-80 leading-tight mt-1">Yearly Average</p>
                 </div>
                 <div class="bg-white/10 rounded-xl p-4 col-span-2 backdrop-blur-sm flex justify-between items-center">
                   <span class="text-[10px] uppercase tracking-wider opacity-80 font-bold">Active Since</span>
-                  <span class="text-xl font-bold font-mono tracking-tighter">${SINCE_YEAR}</span>
+                  <span class="text-xl font-bold font-mono tracking-tighter">${earliestYear}</span>
                 </div>
               </div>
             </div>
@@ -267,41 +258,27 @@ ${navHtml}
                   const s = stats[key];
                   const isHighest = grandTotal > 0 && count === maxCount;
                   const barOpacity = isHighest ? 'opacity-100' : 'opacity-60';
-
                   const labelStyle = isHighest
-                    ? 'style="color: ' + COLORS.primary.rgb + '; font-weight: 800;"'
+                    ? `style="color: ${COLORS.primary.rgb}; font-weight: 800;"`
                     : 'class="text-slate-700 font-bold"';
-
                   const countClass = isHighest ? 'text-2xl sm:text-3xl' : 'text-xl sm:text-2xl';
                   const pctClass = isHighest ? 'text-sm sm:text-base' : 'text-xs sm:text-sm';
 
-                  return (
-                    `
+                  return `
                 <div class="flex-1 flex flex-col justify-center px-8 py-4 border-b border-slate-100 hover:bg-slate-50 transition-colors last:border-0 relative">
                   <div class="flex justify-between items-end mb-2">
-                    <span ` +
-                    labelStyle +
-                    ` class="text-lg">${label}</span>
+                    <span ${labelStyle} class="text-lg">${label}</span>
                     <div class="flex flex-col sm:flex-row items-end sm:items-baseline">
-                      <span style="color: ` +
-                    COLORS.primary.rgb +
-                    `;" class="font-bold ` +
-                    countClass +
-                    `">${count}</span>
-                      <span class="` +
-                    pctClass +
-                    ` text-gray-400 ml-0 sm:ml-1 font-mono">${s.pctStr}</span>
+                      <span style="color: ${COLORS.primary.rgb};" class="font-bold ${countClass}">${count}</span>
+                      <span class="${pctClass} text-gray-400 ml-0 sm:ml-1 font-mono">${s.pctStr}</span>
                     </div>
                   </div>
                   <div class="w-full bg-slate-100/50 rounded-full h-3 overflow-hidden flex">
-                    <div style="width: ${s.pct}%; max-width: ${s.pct}%; background-color: ` +
-                    COLORS.primary.rgb +
-                    `; ${s.pct === 0 ? 'display: none;' : ''}" 
+                    <div style="width: ${s.pct}%; max-width: ${s.pct}%; background-color: ${COLORS.primary.rgb}; ${s.pct === 0 ? 'display: none;' : ''}" 
                            class="progress-bar h-3 rounded-full ${barOpacity} transition-all duration-300">
                     </div>
                   </div>
-                </div>`
-                  );
+                </div>`;
                 })
                 .join('')}
             </div> 
@@ -312,7 +289,6 @@ ${navHtml}
               <h3 class="text-xs uppercase tracking-widest font-bold text-slate-400 mb-4">Primary Focus Projects</h3>
               <div class="divide-y divide-slate-50 min-w-0">${topReposHtml}</div>
             </div>
-            
             <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center">
               <h3 class="text-xs uppercase tracking-widest font-bold text-slate-400 mb-4 flex items-center">
                 Collaboration Profile

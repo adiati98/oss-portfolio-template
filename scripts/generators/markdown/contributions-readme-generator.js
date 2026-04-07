@@ -1,8 +1,6 @@
 const fs = require('fs/promises');
 const path = require('path');
-
-// Import configuration
-const { BASE_DIR, SINCE_YEAR, GITHUB_USERNAME } = require('../../config/config');
+const { BASE_DIR, GITHUB_USERNAME } = require('../../config/config');
 
 const MARKDOWN_OUTPUT_DIR_NAME = 'markdown-generated';
 const MARKDOWN_README_FILENAME = 'README.md';
@@ -87,13 +85,14 @@ async function createStatsReadme(finalContributions) {
   await fs.mkdir(markdownBaseDir, { recursive: true });
 
   // 1. Calculate Totals
-  const prCount = finalContributions.pullRequests.length;
-  const issueCount = finalContributions.issues.length;
-  const reviewedPrCount = finalContributions.reviewedPrs.length;
-  const collaborationCount = finalContributions.collaborations.length;
-  const coAuthoredPrCount = Array.isArray(finalContributions.coAuthoredPrs)
-    ? finalContributions.coAuthoredPrs.length
-    : 0;
+  const prCount = finalContributions.pullRequests?.length || 0;
+  const issueCount = finalContributions.issues?.length || 0;
+  const reviewedPrCount = finalContributions.reviewedPrs?.length || 0;
+  const collaborationCount = finalContributions.collaborations?.length || 0;
+  const coAuthoredPrs = Array.isArray(finalContributions.coAuthoredPrs)
+    ? finalContributions.coAuthoredPrs
+    : [];
+  const coAuthoredPrCount = coAuthoredPrs.length;
 
   const grandTotal =
     prCount + issueCount + reviewedPrCount + collaborationCount + coAuthoredPrCount;
@@ -117,10 +116,9 @@ async function createStatsReadme(finalContributions) {
 
   const lowerDesc = personaDesc.charAt(0).toLowerCase() + personaDesc.slice(1);
   const firstLetter = lowerDesc.charAt(0);
-  // Capitalized article for sentence start
   const article = ['a', 'e', 'i', 'o', 'u'].includes(firstLetter) ? 'An' : 'A';
 
-  // 3. Stats Helper (handles bolding of max values)
+  // 3. Stats Helper
   const getStats = (count) => {
     const BAR_WIDTH = 30;
     if (grandTotal === 0)
@@ -147,11 +145,11 @@ async function createStatsReadme(finalContributions) {
 
   // 4. Aggregate Repository Activity
   const allItems = [
-    ...finalContributions.pullRequests,
-    ...finalContributions.issues,
-    ...finalContributions.reviewedPrs,
-    ...(Array.isArray(finalContributions.coAuthoredPrs) ? finalContributions.coAuthoredPrs : []),
-    ...finalContributions.collaborations,
+    ...(finalContributions.pullRequests || []),
+    ...(finalContributions.issues || []),
+    ...(finalContributions.reviewedPrs || []),
+    ...coAuthoredPrs,
+    ...(finalContributions.collaborations || []),
   ];
 
   const totalUniqueRepos = new Set(allItems.map((item) => item.repo)).size;
@@ -175,13 +173,21 @@ async function createStatsReadme(finalContributions) {
           .join('\n')
       : '_No activity recorded yet._';
 
-  // 5. Metadata
+  // 5. Dynamic year calculation
   const now = new Date();
   const currentYear = now.getFullYear();
-  const yearsTracked = currentYear - SINCE_YEAR + 1;
+
+  const yearsActive = allItems
+    .map((item) => new Date(item.date).getFullYear())
+    .filter((year) => !isNaN(year));
+
+  // Use the earliest year found, otherwise default to the current year
+  const earliestYear = yearsActive.length > 0 ? Math.min(...yearsActive) : currentYear;
+
+  const yearsTracked = currentYear - earliestYear + 1;
   const generatedAt = now.toLocaleString();
 
-  // 6. Generate Quarterly Links (Newest First)
+  // 6. Generate Quarterly Links
   let reportLinksContent = '## 📂 Detailed Quarterly Reports\n\n';
   try {
     const files = await fs.readdir(markdownBaseDir);
@@ -213,7 +219,7 @@ async function createStatsReadme(finalContributions) {
   // 7. Build Markdown Content
   let markdownContent = `# 📈 Open Source Contributions Report
 
-Organized by calendar quarter, these reports track [**${GITHUB_USERNAME}**](https://github.com/${GITHUB_USERNAME})'s external open source involvement since **${SINCE_YEAR}**. This portfolio aggregates key community activities across Merged PRs, Issues, Reviewed PRs, Co-Authored PRs, and general Collaborations.
+Organized by calendar quarter, these reports track [**${GITHUB_USERNAME}**](https://github.com/${GITHUB_USERNAME})'s external open source involvement. This portfolio aggregates key community activities across Merged PRs, Issues, Reviewed PRs, Co-Authored PRs, and general Collaborations.
 
 ---
 
@@ -224,7 +230,7 @@ Organized by calendar quarter, these reports track [**${GITHUB_USERNAME}**](http
 | Context | Detail |
 | :--- | :--- |
 | 🏗️ **Unique Repositories** | **${totalUniqueRepos}** projects |
-| 📅 **Active Since** | **${SINCE_YEAR}** (${yearsTracked} years tracked) |
+| 📅 **Active Since** | **${earliestYear}** (${yearsTracked} years tracked) |
 
 ### 🧩 Contribution Distribution
 

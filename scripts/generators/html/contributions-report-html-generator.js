@@ -1,21 +1,11 @@
 const fs = require('fs/promises');
 const path = require('path');
 const prettier = require('prettier');
-
-// Import the dedent utility
 const { dedent } = require('../../utils/dedent');
-
-// Import configuration (SINCE_YEAR is needed for reporting)
-const { BASE_DIR, SINCE_YEAR } = require('../../config/config');
-
-// Import navbar and footer
+const { BASE_DIR } = require('../../config/config');
 const { createNavHtml } = require('../../components/navbar');
 const { createFooterHtml } = require('../../components/footer');
-
-// Import favicon svg
 const { FAVICON_SVG_ENCODED, COLORS } = require('../../config/constants');
-
-// Import the new style generator function
 const { getReportsListStyleCss } = require('../css/style-generator');
 
 const HTML_OUTPUT_DIR_NAME = 'html-generated';
@@ -24,7 +14,6 @@ const HTML_REPORTS_FILENAME = 'reports.html';
 /**
  * Calculates aggregate totals from all contribution data and writes the
  * all-time contributions HTML report file.
- * @param {object} finalContributions The object with all contributions, grouped by type.
  * @param {Array<string>} quarterlyFileLinks List of relative paths (e.g., ['2023/Q4-2023.html', ...])
  * to the generated quarterly files, provided by the quarterly generator.
  */
@@ -44,17 +33,15 @@ async function createHtmlReports(quarterlyFileLinks = []) {
 
   // Generate Quarterly Links HTML
   const sortedLinks = quarterlyFileLinks
-    // Filter out any undefined/null entries or objects missing the 'path' for safety
     .filter((link) => link && typeof link.path === 'string')
     .sort((a, b) => {
-      // Sort by path string in reverse order (b before a) to show newer quarters first
       if (a.path < b.path) return 1;
       if (a.path > b.path) return -1;
       return 0;
     });
+
   let linkHtml = '';
 
-  // Helper object to group links by year: { '2024': [...links], '2023': [...links] }
   const linksByYear = {};
 
   if (sortedLinks.length > 0) {
@@ -62,13 +49,12 @@ async function createHtmlReports(quarterlyFileLinks = []) {
       const relativePath = link.path;
       const totalContributions = link.total;
 
-      // Extract year (e.g., from '2024/Q1-2024.html' -> '2024')
       const parts = path.dirname(relativePath).split(path.sep);
       const year = parts[parts.length - 1];
 
-      const filename = path.basename(relativePath, '.html'); // Q1-2024
-      const [quarter] = filename.split('-'); // Q1
-      const quarterText = quarter.replace('Q', 'Quarter '); // Quarter 1
+      const filename = path.basename(relativePath, '.html');
+      const [quarter] = filename.split('-');
+      const quarterText = quarter.replace('Q', 'Quarter ');
 
       if (!linksByYear[year]) {
         linksByYear[year] = [];
@@ -81,13 +67,11 @@ async function createHtmlReports(quarterlyFileLinks = []) {
       });
     }
 
-    // Iterate through the years (newest year first)
     const sortedYears = Object.keys(linksByYear).sort().reverse();
 
     let openAttribute = 'open';
 
     for (const year of sortedYears) {
-      // Start a new year section with a dedicated heading
       linkHtml += dedent`
             <details ${openAttribute} class="col-span-full mb-8 border rounded-2xl overflow-hidden transition duration-300" style="border-color: ${COLORS.border.light};">
                 <summary style="color: ${COLORS.text.primary};" class="text-2xl font-bold p-6 cursor-pointer transition duration-150 flex items-center bg-slate-50/50">
@@ -96,7 +80,6 @@ async function createHtmlReports(quarterlyFileLinks = []) {
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-8">
                 `;
 
-      // Add the quarterly cards for this year
       for (const link of linksByYear[year]) {
         linkHtml += dedent`
                 <a href="./${link.relativePath}" 
@@ -109,7 +92,6 @@ async function createHtmlReports(quarterlyFileLinks = []) {
                 `;
       }
 
-      // Close the quarterly list/grid for this year
       linkHtml += dedent`
                 </div>
             </details>
@@ -118,11 +100,9 @@ async function createHtmlReports(quarterlyFileLinks = []) {
       openAttribute = '';
     }
   } else {
-    // Fallback for no reports generated
     linkHtml = `<p style="color: ${COLORS.text.secondary};" class="p-12 text-center italic border-2 border-dashed rounded-2xl">No quarterly reports have been generated yet.</p>`;
   }
 
-  // Build HTML Content
   const htmlContent = dedent`
 <!DOCTYPE html>
 <html lang="en">
@@ -164,12 +144,10 @@ ${navHtml}
 </html>
 `;
 
-  // Format the content
   const formattedContent = await prettier.format(htmlContent, {
     parser: 'html',
   });
 
-  // Write the formatted file
   await fs.writeFile(HTML_OUTPUT_PATH, formattedContent, 'utf8');
   console.log(`Written aggregate HTML report: ${HTML_OUTPUT_PATH}`);
 }

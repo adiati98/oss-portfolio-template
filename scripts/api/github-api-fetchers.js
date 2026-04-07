@@ -6,14 +6,28 @@ const axios = require('axios');
 const { GITHUB_USERNAME, BASE_URL } = require('../config/config');
 
 /**
+ * Fetches the year the user joined GitHub to set the baseline for discovery.
+ */
+async function getGitHubJoinYear(axiosInstance) {
+  try {
+    const response = await axiosInstance.get(`/users/${GITHUB_USERNAME}`);
+    const joinDate = new Date(response.data.created_at);
+    return joinDate.getFullYear();
+  } catch (err) {
+    console.error('❌ Error discovering GitHub join date, defaulting to 2020:', err.message);
+    return 2020;
+  }
+}
+
+/**
  * Fetches all contribution data from the GitHub API for a given year range.
  * This includes Pull Requests, Issues, Reviewed PRs, and Collaborations.
  * It handles pagination and API rate limiting.
- * @param {number} startYear The year to begin fetching contributions from.
+ * @param {number|undefined} requestedStartYear The year to begin fetching. If undefined, it auto-discovers.
  * @param {Set<string>} prCache A set of PR URLs that have already been processed to avoid redundant work.
  * @returns {Promise<{contributions: object, prCache: Set<string>}>} An object containing the fetched contributions and the updated cache.
  */
-async function fetchContributions(startYear, prCache, persistentCommitCache) {
+async function fetchContributions(requestedStartYear, prCache, persistentCommitCache) {
   // Ensure the GitHub token is available from the environment variables.
   const token = process.env.GITHUB_TOKEN;
   if (!token) {
@@ -28,6 +42,13 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
       Accept: 'application/vnd.github.v3+json',
     },
   });
+
+  // --- AUTO-DISCOVERY LOGIC ---
+  let startYear = requestedStartYear;
+  if (!startYear) {
+    console.log(`🔍 No start year provided. Discovering first year for ${GITHUB_USERNAME}...`);
+    startYear = await getGitHubJoinYear(axiosInstance);
+  }
 
   // Initialize objects to store the fetched data and track seen URLs to prevent duplicates.
   const contributions = {
@@ -47,17 +68,12 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
   };
 
   // Use the persistent commit cache if provided, otherwise start with an empty Map
-  // This allows the cache to be updated and returned for persistence across runs
   const commitCache =
     persistentCommitCache instanceof Map ? new Map(persistentCommitCache) : new Map();
   const currentYear = new Date().getFullYear();
 
   /**
    * A helper function to fetch all pages for a given search query.
-   * GitHub's search API is paginated, so this handles fetching all results.
-   * It also includes logic to handle API rate limits by waiting for 60 seconds if a 403 error is received.
-   * @param {string} query The GitHub search query string.
-   * @returns {Promise<Array<object>>} An array of all results from the search.
    */
   async function getAllPages(query) {
     let results = [];
@@ -69,23 +85,20 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
         );
         results.push(...response.data.items);
 
-        // Check for a 'next' page link in the headers.
         const linkHeader = response.headers.link;
         if (linkHeader && linkHeader.includes('rel="next"')) {
           page++;
         } else {
           break;
         }
-        // Pause between requests
         await new Promise((resolve) => setTimeout(resolve, 1000));
       } catch (err) {
-        // Handle rate limit errors (status code 403).
         if (err.response && err.response.status === 403) {
           console.log('Rate limit hit. Waiting for 60 seconds...');
           await new Promise((resolve) => setTimeout(resolve, 60000));
-          continue; // Retry the same page after waiting.
+          continue;
         } else {
-          throw err; // Re-throw other errors.
+          throw err;
         }
       }
     }
@@ -103,11 +116,9 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
   async function getPrMyFirstReviewDate(owner, repo, prNumber, username) {
     try {
       const response = await axiosInstance.get(`/repos/${owner}/${repo}/pulls/${prNumber}/reviews`);
-      // Filter for reviews by the specified user, sort chronologically, and handle "Ghost" users (null user object)
       const myReviews = response.data
         .filter((review) => review.user?.login === username)
         .sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
-      // The first review in the sorted list is the user's first review.
       if (myReviews.length > 0) {
         return myReviews[0].submitted_at;
       }
@@ -139,7 +150,7 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
         if (linkHeader && linkHeader.includes('rel="next"')) {
           page++;
         } else {
-          return null; // No more pages and no comment found.
+          return null;
         }
       }
     } catch (err) {
@@ -158,9 +169,6 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
    * @param {string} username The username to check for.
    * @returns {Promise<{firstCommitDate: string, commitCount: number}|null>} Details of the first commit, or null if none.
    */
-  // Now accepts optional `prUpdatedAt` so cached results are re-used only when
-  // the PR has not been updated since the cached check. This prevents stale
-  // "no commits found" results from persisting after new commits are pushed.
   async function getFirstCommitDetails(
     owner,
     repo,
@@ -169,14 +177,10 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
     commitCache,
     prUpdatedAt = null
   ) {
-    const prUrlKey = `/repos/${owner}/${repo}/pulls/${prNumber}`; // Use a consistent key for caching
+    const prUrlKey = `/repos/${owner}/${repo}/pulls/${prNumber}`;
 
-    // 1. CHECK CACHE
     if (commitCache.has(prUrlKey)) {
       const cached = commitCache.get(prUrlKey);
-      // Use cached only when it has a recorded prUpdatedAt that matches the
-      // current PR updated time. This ensures we re-check commits when the PR
-      // has changed (e.g. new commits were pushed).
       if (
         cached &&
         typeof cached === 'object' &&
@@ -186,13 +190,11 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
       ) {
         return cached;
       }
-      // Otherwise fall through and re-fetch commits.
     }
 
-    let result = null; // Initialize result to be cached
+    let result = null;
 
     try {
-      // Paginate through commits for the PR (some PRs may have >100 commits).
       let page = 1;
       let allCommits = [];
       while (true) {
@@ -202,186 +204,106 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
         const linkHeader = resp.headers.link;
         if (linkHeader && linkHeader.includes('rel="next"')) {
           page++;
-          // small delay to be polite to API
           await new Promise((r) => setTimeout(r, 200));
         } else {
           break;
         }
       }
 
-      let commitCount = 0;
-      let earliestCommitDate = null;
-
-      /**
-       * Determines if a commit should be attributed to the user.
-       * Excludes automated "Update branch" commits from GitHub UI.
-       */
       function isCommitByUser(c) {
         try {
           const lowerUsername = username.toLowerCase();
           const commitMessage = c.commit?.message || '';
-
-          // --- 1. Filter out GitHub UI branch updates ---
-          // This matches: "Merge branch 'main' into feature-branch"
-          // This is a standard GitHub pattern for the "Update branch" button.
           const isBranchUpdate = /^Merge branch '.+' into .+/i.test(commitMessage);
-
-          if (isBranchUpdate) {
-            return false;
-          }
-
-          // --- 2. Check for explicit GitHub login match ---
+          if (isBranchUpdate) return false;
           if (c.author?.login === username) return true;
-
-          // --- 3. Email Attribution Checks ---
           const authorEmail = c.commit?.author?.email?.toLowerCase();
           if (authorEmail) {
-            // Standard ID+username@users.noreply.github.com
             if (
               authorEmail.endsWith('@users.noreply.github.com') &&
               authorEmail.includes(`+${lowerUsername}@`)
-            ) {
+            )
               return true;
-            }
-
-            // Legacy username@users.noreply.github.com
-            if (authorEmail === `${lowerUsername}@users.noreply.github.com`) {
-              return true;
-            }
-
-            // Fallback: Check if email contains username
-            if (authorEmail.includes(lowerUsername)) {
-              return true;
-            }
+            if (authorEmail === `${lowerUsername}@users.noreply.github.com`) return true;
+            if (authorEmail.includes(lowerUsername)) return true;
           }
-
-          // --- 4. Name Attribution ---
-          if (
-            c.commit?.author?.name &&
-            c.commit.author.name.toLowerCase().includes(lowerUsername)
-          ) {
+          if (c.commit?.author?.name && c.commit.author.name.toLowerCase().includes(lowerUsername))
             return true;
-          }
-
-          // --- 5. Co-authored-by trailers ---
           if (
             /Co-authored-by:/i.test(commitMessage) &&
             commitMessage.toLowerCase().includes(lowerUsername)
-          ) {
+          )
             return true;
-          }
         } catch (e) {
-          // Default to false on error to avoid false positives in others' data
           return false;
         }
         return false;
       }
 
-      // Filter commits that match the user by any of the heuristics above
       const userCommits = allCommits.filter(isCommitByUser);
 
       if (userCommits.length > 0) {
-        commitCount = userCommits.length;
-        // Sort chronologically to find the earliest date
         userCommits.sort((a, b) => new Date(a.commit.author.date) - new Date(b.commit.author.date));
-        earliestCommitDate = userCommits[0].commit.author.date;
-
         result = {
-          firstCommitDate: earliestCommitDate,
-          commitCount: commitCount,
+          firstCommitDate: userCommits[0].commit.author.date,
+          commitCount: userCommits.length,
           prUpdatedAt,
         };
       } else {
-        // If no commits were found, cache an explicit object so we can still
-        // record the PR's updated timestamp and re-check later if the PR
-        // changes.
-        result = {
-          firstCommitDate: null,
-          commitCount: 0,
-          prUpdatedAt,
-        };
+        result = { firstCommitDate: null, commitCount: 0, prUpdatedAt };
       }
     } catch (err) {
-      if (err.response && (err.response.status === 403 || err.response.status === 404)) {
-        // Treat API error/not found as null result for caching
-        result = {
-          firstCommitDate: null,
-          commitCount: 0,
-          prUpdatedAt,
-        };
-      } else {
-        throw err;
-      }
+      result = { firstCommitDate: null, commitCount: 0, prUpdatedAt };
     }
 
-    // 2. WRITE CACHE & RETURN
     commitCache.set(prUrlKey, result);
     return result;
   }
 
-  // Loop through each year from the start year to the current year.
   for (let year = startYear; year <= currentYear; year++) {
     console.log(`Fetching contributions for year: ${year}...`);
-    
-    // Define the start and end dates for the year to use in API queries.
+
     const yearStart = `${year}-01-01T00:00:00Z`;
     const yearEnd = `${year + 1}-01-01T00:00:00Z`;
 
-    // --- Fetch PRs authored by the user and merged in the given year ---
     const prs = await getAllPages(
       `is:pr author:${GITHUB_USERNAME} is:merged merged:${yearStart}..${yearEnd}`
     );
 
     for (const pr of prs) {
-      // 1. Check if the PR is already in the long-term cache (`prCache`).
-      if (prCache.has(pr.html_url)) {
-        continue; // If it's cached, skip to the next PR.
-      }
+      if (prCache.has(pr.html_url)) continue;
 
-      // Extract repository owner.
       const repoParts = new URL(pr.repository_url).pathname.split('/');
       const owner = repoParts[repoParts.length - 2];
       const repoName = repoParts[repoParts.length - 1];
 
-      // 2. Check if the PR is from your own repo (self-PRs are typically excluded).
       if (owner === GITHUB_USERNAME) {
-        // Log and add to the persistent cache to skip it next time.
         prCache.add(pr.html_url);
         continue;
       }
 
-      // 3. For an external PR, add it to the persistent cache to prevent re-processing in subsequent runs.
       prCache.add(pr.html_url);
+      if (seenUrls.pullRequests.has(pr.html_url)) continue;
 
-      // 4. Check the temporary, in-run cache (`seenUrls`) to avoid processing the same PR twice within this run.
-      if (seenUrls.pullRequests.has(pr.html_url)) {
-        continue;
-      }
-
-      // 5. Process the PR and add it to the final contributions list.
       contributions.pullRequests.push({
         title: pr.title,
         url: pr.html_url,
         repo: `${owner}/${repoName}`,
-        date: pr.pull_request.merged_at, // 'date' is used for quarterly grouping, which must be the merge date.
+        date: pr.pull_request.merged_at,
         mergedAt: pr.pull_request.merged_at,
         createdAt: pr.created_at,
         reviewPeriod: Math.round(
           (new Date(pr.pull_request.merged_at) - new Date(pr.created_at)) / (1000 * 60 * 60 * 24)
         ),
       });
-      // Add the URL to the seen set for this run.
       seenUrls.pullRequests.add(pr.html_url);
     }
 
-    // --- Fetch Issues authored by the user on other people's repositories ---
     const issues = await getAllPages(
       `is:issue author:${GITHUB_USERNAME} -user:${GITHUB_USERNAME} created:${yearStart}..${yearEnd}`
     );
     for (const issue of issues) {
-      if (seenUrls.issues.has(issue.html_url)) {
-        continue;
-      }
+      if (seenUrls.issues.has(issue.html_url)) continue;
       const repoParts = new URL(issue.repository_url).pathname.split('/');
       const owner = repoParts[repoParts.length - 2];
       const repoName = repoParts[repoParts.length - 1];
@@ -404,9 +326,6 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
       seenUrls.issues.add(issue.html_url);
     }
 
-    // --- Fetch Reviewed PRs (PRs reviewed, merged, or closed by the user) ---
-    // Note: The GitHub search API doesn't support multiple 'closed-by' or 'merged-by' filters,
-    // so we combine multiple queries and deduplicate the results.
     const reviewedByPrs = await getAllPages(
       `is:pr reviewed-by:${GITHUB_USERNAME} -author:${GITHUB_USERNAME} updated:${yearStart}..${yearEnd}`
     );
@@ -421,114 +340,77 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
     const uniqueReviewedPrs = new Set();
 
     for (const pr of combinedResults) {
-      // 1. Initial Checks (Skip Private, Bot, Deduplicate)
-      if (pr.private) {
-        console.log(`Skipping private repository PR: ${pr.html_url}`);
-        prCache.add(pr.html_url);
-        continue; // Skip to the next PR
-      }
-
-      if (pr.user && pr.user.type === 'Bot') {
+      if (pr.private || (pr.user && pr.user.type === 'Bot')) {
         prCache.add(pr.html_url);
         continue;
       }
 
-      // --- 2. Variable Declaration ---
-      let owner = null;
-      let repoName = null;
-      const prNumber = pr.number; // pr.number is reliably available
-
-      // --- 3. Repository URL Parsing and Owner Check ---
+      let owner, repoName;
       try {
         const repoParts = new URL(pr.repository_url).pathname.split('/');
         owner = repoParts[repoParts.length - 2];
         repoName = repoParts[repoParts.length - 1];
-
-        // Skip PRs that belong to the user's own repositories.
         if (owner === GITHUB_USERNAME) {
           prCache.add(pr.html_url);
           continue;
         }
       } catch (e) {
-        // If URL parsing fails, we must skip the PR since we can't make API calls.
-        console.warn(`Skipping PR due to repository URL parsing failure: ${pr.html_url}`);
         prCache.add(pr.html_url);
-        continue; // Skip to the next PR
+        continue;
       }
 
-      // --- 4. Date Check ---
       const prDate = new Date(pr.updated_at);
-      const yearStartDate = new Date(yearStart);
-      const yearEndDate = new Date(yearEnd);
+      if (prDate >= new Date(yearStart) && prDate < new Date(yearEnd)) {
+        let mergedAt =
+          pr.pull_request?.merged_at ||
+          (pr.state === 'closed' && pr.merged_at ? pr.merged_at : null);
+        let mergePeriod = mergedAt
+          ? Math.round((new Date(mergedAt) - new Date(pr.created_at)) / (1000 * 60 * 60 * 24)) +
+            ' days'
+          : pr.state === 'closed'
+            ? 'Closed'
+            : 'Open';
 
-      if (prDate >= yearStartDate && prDate < yearEndDate) {
-        // --- 5. MergedAt Logic ---
-        let mergedAt = null;
-        let mergePeriod = 'Open';
-
-        // Check if the PR is merged and fetch the merged_at date.
-        if (pr.pull_request && pr.pull_request.merged_at) {
-          mergedAt = pr.pull_request.merged_at;
-          mergePeriod =
-            Math.round((new Date(mergedAt) - new Date(pr.created_at)) / (1000 * 60 * 60 * 24)) +
-            ' days';
-        } else if (pr.state === 'closed' && pr.merged_at) {
-          // Fallback if the search result itself has the merged_at property (for merged PRs).
-          mergedAt = pr.merged_at;
-          mergePeriod =
-            Math.round((new Date(mergedAt) - new Date(pr.created_at)) / (1000 * 60 * 60 * 24)) +
-            ' days';
-        } else if (pr.state === 'closed') {
-          mergePeriod = 'Closed';
-        }
-
-        // --- 6. Check Co-Authored PRs (INDEPENDENT) ---
         const commitDetails = await getFirstCommitDetails(
           owner,
           repoName,
-          prNumber,
+          pr.number,
           GITHUB_USERNAME,
           commitCache,
           pr.updated_at
         );
 
-        // Process co-authored PR details if user commits were found
         if (commitDetails && commitDetails.firstCommitDate) {
           const daysDiff = Math.round(
             (new Date(commitDetails.firstCommitDate) - new Date(pr.created_at)) /
               (1000 * 60 * 60 * 24)
           );
-          const firstCommitPeriod = daysDiff + (daysDiff === 1 ? ' day' : ' days');
-
           contributions.coAuthoredPrs.push({
             title: pr.title,
             url: pr.html_url,
             repo: `${owner}/${repoName}`,
-            date: commitDetails.firstCommitDate || pr.updated_at,
+            date: commitDetails.firstCommitDate,
             createdAt: pr.created_at,
             firstCommitDate: commitDetails.firstCommitDate,
-            firstCommitPeriod: firstCommitPeriod,
+            firstCommitPeriod: daysDiff + (daysDiff === 1 ? ' day' : ' days'),
             commitCount: commitDetails.commitCount,
-            mergedAt: mergedAt,
+            mergedAt,
             state: pr.state,
           });
           seenUrls.coAuthoredPrs.add(pr.html_url);
         }
 
-        // --- 7. Reviewed PRs Logic (INDEPENDENT) ---
         const myFirstReviewDate = await getPrMyFirstReviewDate(
           owner,
           repoName,
-          prNumber,
+          pr.number,
           GITHUB_USERNAME
         );
-
         if (myFirstReviewDate && !uniqueReviewedPrs.has(pr.html_url)) {
           let myFirstReviewPeriod =
             Math.round(
               (new Date(myFirstReviewDate) - new Date(pr.created_at)) / (1000 * 60 * 60 * 24)
             ) + ' days';
-
           contributions.reviewedPrs.push({
             title: pr.title,
             url: pr.html_url,
@@ -546,7 +428,6 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
       }
     }
 
-    // --- Fetch Collaborations (PRs/Issues commented on by the user) ---
     const collaborationsPrs = await getAllPages(
       `is:pr commenter:${GITHUB_USERNAME} -author:${GITHUB_USERNAME} -reviewed-by:${GITHUB_USERNAME} updated:${yearStart}..${yearEnd}`
     );
@@ -557,23 +438,12 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
     const allCollaborations = [...collaborationsPrs, ...collaborationsIssues];
 
     for (const item of allCollaborations) {
-      // --- 1. Variable Extraction ---
       const repoParts = new URL(item.repository_url).pathname.split('/');
       const owner = repoParts[repoParts.length - 2];
       const repoName = repoParts[repoParts.length - 1];
 
-      // Skip if already processed in this loop or in your own repos.
-      if (seenUrls.collaborations.has(item.html_url)) {
-        continue;
-      }
+      if (seenUrls.collaborations.has(item.html_url) || owner === GITHUB_USERNAME) continue;
 
-      // Skip collaborations that are in the user's own repositories.
-      if (owner === GITHUB_USERNAME) {
-        prCache.add(item.html_url);
-        continue;
-      }
-
-      // --- 2. Check for commits on PRs (Co-Authored Promotion) ---
       let hasCommits = false;
       if (item.pull_request) {
         const commitDetails = await getFirstCommitDetails(
@@ -584,16 +454,13 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
           commitCache,
           item.updated_at
         );
-
         if (commitDetails && commitDetails.firstCommitDate) {
           hasCommits = true;
           if (!seenUrls.coAuthoredPrs.has(item.html_url)) {
-            let mergedAt = item.pull_request.merged_at || null;
             const daysDiff = Math.round(
               (new Date(commitDetails.firstCommitDate) - new Date(item.created_at)) /
                 (1000 * 60 * 60 * 24)
             );
-
             contributions.coAuthoredPrs.push({
               title: item.title,
               url: item.html_url,
@@ -603,7 +470,7 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
               firstCommitDate: commitDetails.firstCommitDate,
               firstCommitPeriod: daysDiff + (daysDiff === 1 ? ' day' : ' days'),
               commitCount: commitDetails.commitCount,
-              mergedAt: mergedAt,
+              mergedAt: item.pull_request.merged_at || null,
               state: item.state,
             });
             seenUrls.coAuthoredPrs.add(item.html_url);
@@ -611,7 +478,6 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
         }
       }
 
-      // --- 3. Check for reviews (Reviewed Promotion) ---
       let hasReview = false;
       if (item.pull_request && !uniqueReviewedPrs.has(item.html_url)) {
         const myFirstReviewDate = await getPrMyFirstReviewDate(
@@ -620,7 +486,6 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
           item.number,
           GITHUB_USERNAME
         );
-
         if (myFirstReviewDate) {
           hasReview = true;
           let mergedAt = item.pull_request.merged_at || null;
@@ -630,12 +495,10 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
             : item.state === 'closed'
               ? 'Closed'
               : 'Open';
-
           let myFirstReviewPeriod =
             Math.round(
               (new Date(myFirstReviewDate) - new Date(item.created_at)) / (1000 * 60 * 60 * 24)
             ) + ' days';
-
           contributions.reviewedPrs.push({
             title: item.title,
             url: item.html_url,
@@ -652,15 +515,8 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
         }
       }
 
-      // --- 4. Collaborations Logic ---
       if (!hasCommits && !hasReview) {
         const firstCommentDate = await getFirstCommentDate(item.comments_url, GITHUB_USERNAME);
-
-        let mergedAt = null;
-        if (item.pull_request && item.pull_request.merged_at) {
-          mergedAt = item.pull_request.merged_at;
-        }
-
         contributions.collaborations.push({
           title: item.title,
           url: item.html_url,
@@ -669,7 +525,7 @@ async function fetchContributions(startYear, prCache, persistentCommitCache) {
           createdAt: item.created_at,
           firstCommentedAt: firstCommentDate,
           state: item.state,
-          mergedAt: mergedAt,
+          mergedAt: item.pull_request?.merged_at || null,
           closedAt: item.state === 'closed' ? item.closed_at : null,
           updatedAt: item.updated_at,
         });
