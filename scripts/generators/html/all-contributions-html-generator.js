@@ -108,10 +108,13 @@ async function createAllTimeContributions(finalContributions = {}) {
   // Find the earliest date in the dataset to determine "Active Since"
   const yearsActive = allItems
     .map((item) => new Date(item.date).getFullYear())
-    .filter((year) => !isNaN(year));
+    // Filter out NaNs, the 1970 Epoch error, and anything before GitHub (2008)
+    .filter((year) => !isNaN(year) && year >= 2008);
 
-  const earliestYear = yearsActive.length > 0 ? Math.min(...yearsActive) : new Date().getFullYear();
+  // Fallback to the current year if the array is empty
   const currentYear = new Date().getFullYear();
+  const earliestYear = yearsActive.length > 0 ? Math.min(...yearsActive) : currentYear;
+
   const yearSpan = Math.max(1, currentYear - earliestYear + 1);
   const yearlyAverage = (grandTotal / yearSpan).toFixed(0);
 
