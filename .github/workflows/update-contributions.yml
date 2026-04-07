@@ -77,12 +77,13 @@ jobs:
             echo "pushed=false" >> $GITHUB_OUTPUT
           fi
 
-      # -----------------------------------------------------------------------
-      # DEPLOYMENT SETUP (OPTIONAL):
-      # This project automatically generates Markdown reports. 
-      # 
-      # If you wish to showcase your portfolio as a static website, you must write 
-      # and set up an additional action or build hook here to deploy the 
-      # 'contributions/html-generated/' directory to your own host 
-      # (e.g., Vercel, Netlify, or GitHub Pages).
-      # -----------------------------------------------------------------------
+      # Triggers the Netlify build only if new content was committed and pushed
+      - name: Trigger Netlify Deployment
+        # Check the output from the previous step
+        if: steps.commit.outputs.pushed == 'true'
+        run: |
+          echo "Content updated. Triggering Netlify deployment via Build Hook..."
+          curl -s -X POST -d {} ${NETLIFY_BUILD_HOOK} -o /dev/null
+        env:
+          # Reference the Build Hook URL secret
+          NETLIFY_BUILD_HOOK: ${{ secrets.NETLIFY_BUILD_HOOK }}
