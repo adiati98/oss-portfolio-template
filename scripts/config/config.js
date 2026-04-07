@@ -1,7 +1,6 @@
 // --- Core Configuration Variables ---
-// Change GITHUB_USERNAME and SINCE_YEAR to set the starting year for your contribution history.
+// GITHUB_USERNAME is used to fetch and identify your contribution history.
 const GITHUB_USERNAME = 'your-github-username';
-const SINCE_YEAR = 2024;
 const BASE_URL = 'https://api.github.com';
 
 // --- Configuration to generate README in the contributions folder ---
@@ -10,7 +9,6 @@ const path = require('path');
 
 module.exports = {
   GITHUB_USERNAME,
-  SINCE_YEAR,
   BASE_URL,
   BASE_DIR,
 };

@@ -25,15 +25,13 @@ Follow these steps to set up your own automated contribution log.
 
 ### 1. Update Configuration
 
-Open `scripts/config/config.js` and edit the following lines to match your GitHub handle and the year you want to start tracking from:
+Open `scripts/config/config.js` and and update your GitHub handle.
 
 ```javascript
 // scripts/config/config.js
 
 // Change this to your GitHub handle
 const GITHUB_USERNAME = 'your-github-username';
-// Change this to the earliest year you want to track
-const SINCE_YEAR = 2024;
 ```
 
 ### 2. Running Locally
@@ -118,6 +116,7 @@ The script follows a clear pipeline: fetch data, process it, and generate output
 #### 1. Data Fetching & Processing
 
 - **GitHub API (v3):** The script communicates with the GitHub REST API to collect five distinct types of community activity: **Merged PRs, Issues, Reviewed PRs, Co-authored PRs, and Collaborations**.
+- **Auto-Discovery Logic:** The system automatically scans your entire contribution history to determine your "Active Since" date.
 - **Smart Syncing:** The script performs either a fast incremental update (fetching only recent activity) or a full sync to ensure it captures every historical contribution.
 - **Deduplication:** The script resolves the latest status for every contribution and deduplicates items that might appear in multiple search queries.
 - **Caching:** The script maintains `pr-cache.json` and `commit-cache.json` to dramatically speed up future runs by skipping already processed pull request data and co-author commit history.
