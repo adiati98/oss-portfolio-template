@@ -1,7 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 
-const targets = ['data', 'contributions/markdown-generated', 'contributions/html-generated'];
+const targets = [
+  'data',
+  'contributions/markdown-generated',
+  'contributions/html-generated',
+  '.github/workflows/demo-trigger.yml',
+];
 
 const cleanFolder = (dirPath, isRoot = true) => {
   if (!fs.existsSync(dirPath)) return;
