@@ -1,12 +1,16 @@
 name: Update Contributions
 
 on:
-  schedule:
-    # Monthly full sync at 01:01 UTC on the 1st of the month (1h after main)
-    - cron: '1 1 1 * *'
-    # Daily update at 02:00 UTC (1h after main)
-    - cron: '0 2 * * *'
   workflow_dispatch:
+    inputs:
+      sync_mode:
+        description: 'Type of sync to perform'
+        required: true
+        default: 'daily'
+        type: choice
+        options:
+          - daily
+          - full
 
 jobs:
   run_scheduled_update:
@@ -17,32 +21,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # Fetch full history to properly determine the last update date.
+          ref: demo
           fetch-depth: 0 
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'  # Automatically handles node_modules caching
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci  # Uses package-lock.json for exact versions
+        run: npm ci
 
       - name: Conditionally run full sync or daily update
         run: |
-          echo "github.event.schedule is ${{ github.event.schedule }}"
-          # Check if the triggering schedule is the monthly cron
-          if [ "${{ github.event.schedule }}" = "1 1 1 * *" ]; then
-            echo "Running monthly full sync..."
-            # Force the script to do a full run by deleting the cache files
+          # Use the input signal sent from the main branch trigger
+          if [ "${{ github.event.inputs.sync_mode }}" = "full" ]; then
+            echo "Security Check: Full sync requested. Purging cache..."
             rm -f data/all-contributions.json
             rm -f data/commit-cache.json
             rm -f data/pr-cache.json
             node scripts/src/main.js
           else
-            echo "Running daily update..."
-            # Run the script incrementally, relying on existing data files
+            echo "Running standard daily incremental update..."
             node scripts/src/main.js
           fi
         env:
@@ -57,33 +58,24 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Add the generated files to the staging area
           git add contributions/markdown-generated/ contributions/html-generated/ data/
           
-          # Check if there are any changes to commit
           if ! git diff --staged --quiet; then
-            # Use a different commit message based on the update type
-            if [ "${{ github.event.schedule }}" = "1 1 1 * *" ]; then
+            if [ "${{ github.event.inputs.sync_mode }}" = "full" ]; then
                 git commit -m "docs: Monthly full sync [skip ci]"
             else
                 git commit -m "docs: Daily contributions update [skip ci]"
             fi
-            git push
-            # Signal that a push occurred
+            git push origin demo
             echo "pushed=true" >> $GITHUB_OUTPUT 
           else
             echo "No changes to commit"
-            # Signal no push occurred
             echo "pushed=false" >> $GITHUB_OUTPUT
           fi
 
-      # Triggers the Netlify build only if new content was committed and pushed
       - name: Trigger Netlify Deployment
-        # Check the output from the previous step
         if: steps.commit.outputs.pushed == 'true'
         run: |
-          echo "Content updated. Triggering Netlify deployment via Build Hook..."
           curl -s -X POST -d {} ${NETLIFY_BUILD_HOOK} -o /dev/null
         env:
-          # Reference the Build Hook URL secret
           NETLIFY_BUILD_HOOK: ${{ secrets.NETLIFY_BUILD_HOOK }}
