@@ -2,7 +2,10 @@ name: Demo Branch Auto-Trigger
 
 on:
   schedule:
+    # Daily signal at 01:30 UTC
     - cron: '30 1 * * *'
+    # Monthly signal at 01:05 UTC on the 1st
+    - cron: '5 1 1 * *'
   workflow_dispatch:
 
 jobs:
@@ -10,10 +13,20 @@ jobs:
     if: github.repository == 'adiati98/oss-portfolio-template'
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Demo Branch
+      - name: Determine Sync Mode
+        id: mode
         run: |
-          curl -X POST \
+          if [ "${{ github.event.schedule }}" = "5 1 1 * *" ]; then
+            echo "sync_mode=full" >> $GITHUB_OUTPUT
+          else
+            echo "sync_mode=daily" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Secure API Signal to Demo Branch
+        run: |
+          curl -L -X POST \
+          -H "Accept: application/vnd.github+json" \
           -H "Authorization: Bearer ${{ secrets.TRIGGER_TOKEN }}" \
-          -H "Accept: application/vnd.github.v3+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
           https://api.github.com/repos/${{ github.repository }}/actions/workflows/update-contributions.yml/dispatches \
-          -d '{"ref":"demo"}'
+          -d "{\"ref\":\"demo\", \"inputs\": {\"sync_mode\": \"${{ steps.mode.outputs.sync_mode }}\"}}"
