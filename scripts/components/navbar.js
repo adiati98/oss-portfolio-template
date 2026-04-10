@@ -2,7 +2,7 @@ const { dedent } = require('../utils/dedent');
 const { GITHUB_USERNAME } = require('../config/config');
 const { COLORS } = require('../config/constants');
 
-const GITHUB_REPO_URL = `https://github.com/${GITHUB_USERNAME}/oss-portfolio`;
+const GITHUB_REPO_URL = `https://github.com/${GITHUB_USERNAME}/oss-portfolio-template`;
 
 // SVG for GitHub icon
 const GITHUB_ICON_PATH_DATA = dedent`
