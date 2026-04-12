@@ -2,7 +2,7 @@ const fs = require('fs/promises');
 const path = require('path');
 const prettier = require('prettier');
 const { dedent } = require('../../utils/dedent');
-const { BASE_DIR } = require('../../config/config');
+const { GITHUB_USERNAME, BASE_DIR } = require('../../config/config');
 const {
   formatDate,
   calculatePeriodInDays,
@@ -331,7 +331,7 @@ async function writeHtmlFiles(groupedContributions) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${quarter} ${year} Contributions Report</title>
+  <title>${quarter} ${year} Report | ${GITHUB_USERNAME} OSS Portfolio</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,${FAVICON_SVG_ENCODED}">
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <style>
@@ -366,37 +366,37 @@ ${navHtmlForReports}
           <h3 class="text-2xl font-semibold text-gray-800 mt-16 mb-4 border-l-4 border-green-500 pl-3">Contribution Breakdown</h3>
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 text-sm">
             ${[
-                {
-                  id: sections.pullRequests.id,
-                  count: prCount,
-                  label: 'Merged PRs',
-                  icon: sections.pullRequests.icon,
-                },
-                {
-                  id: sections.issues.id,
-                  count: issueCount,
-                  label: 'Issues',
-                  icon: sections.issues.icon,
-                },
-                {
-                  id: sections.reviewedPrs.id,
-                  count: reviewedPrCount,
-                  label: 'Reviewed PRs',
-                  icon: sections.reviewedPrs.icon,
-                },
-                {
-                  id: sections.coAuthoredPrs.id,
-                  count: coAuthoredPrCount,
-                  label: 'Co-Authored PRs',
-                  icon: sections.coAuthoredPrs.icon,
-                },
-                {
-                  id: sections.collaborations.id,
-                  count: collaborationCount,
-                  label: 'Collaborations',
-                  icon: sections.collaborations.icon,
-                },
-              ]
+              {
+                id: sections.pullRequests.id,
+                count: prCount,
+                label: 'Merged PRs',
+                icon: sections.pullRequests.icon,
+              },
+              {
+                id: sections.issues.id,
+                count: issueCount,
+                label: 'Issues',
+                icon: sections.issues.icon,
+              },
+              {
+                id: sections.reviewedPrs.id,
+                count: reviewedPrCount,
+                label: 'Reviewed PRs',
+                icon: sections.reviewedPrs.icon,
+              },
+              {
+                id: sections.coAuthoredPrs.id,
+                count: coAuthoredPrCount,
+                label: 'Co-Authored PRs',
+                icon: sections.coAuthoredPrs.icon,
+              },
+              {
+                id: sections.collaborations.id,
+                count: collaborationCount,
+                label: 'Collaborations',
+                icon: sections.collaborations.icon,
+              },
+            ]
               .map(
                 (item) => `
               <a href="#${item.id}" class="nav-contribution-button flex flex-col items-center p-3 bg-white border rounded-xl shadow-sm hover:shadow-lg transition text-center" style="color: ${COLORS.primary.rgb};">
