@@ -2,7 +2,7 @@ const fs = require('fs/promises');
 const path = require('path');
 const prettier = require('prettier');
 const { dedent } = require('../../utils/dedent');
-const { BASE_DIR } = require('../../config/config');
+const { GITHUB_USERNAME, BASE_DIR } = require('../../config/config');
 const { createNavHtml } = require('../../components/navbar');
 const { createFooterHtml } = require('../../components/footer');
 const { FAVICON_SVG_ENCODED, COLORS } = require('../../config/constants');
@@ -109,7 +109,7 @@ async function createHtmlReports(quarterlyFileLinks = []) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quarterly Reports | Open Source Portfolio</title>
+  <title>Quarterly Reports | ${GITHUB_USERNAME} OSS Portfolio</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,${FAVICON_SVG_ENCODED}">
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <style>

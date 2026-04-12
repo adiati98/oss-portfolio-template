@@ -110,7 +110,7 @@ async function createGlossaryHtml() {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Glossary | ${GITHUB_USERNAME} Portfolio</title>
+      <title>Glossary | ${GITHUB_USERNAME} OSS Portfolio</title>
       <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,${FAVICON_SVG_ENCODED}">
       <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
       <style>${glossaryCss}</style>
