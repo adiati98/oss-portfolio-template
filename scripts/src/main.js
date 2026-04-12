@@ -1,12 +1,21 @@
 const path = require('path');
 const fs = require('fs/promises');
+
+// Import configuration
 const { GITHUB_USERNAME } = require('../config/config');
+
+// Import core fetching logic
 const { fetchContributions } = require('../api/github-api-fetchers');
+
+// Import grouping logic
 const { groupContributionsByQuarter } = require('../utils/contributions-groupers');
+
+// Import markdown generation logic
 const { writeMarkdownFiles } = require('../generators/markdown/quarterly-reports-generator');
 const { createStatsReadme } = require('../generators/markdown/contributions-readme-generator');
+
+// Import html generation logic
 const { writeHtmlFiles } = require('../generators/html/quarterly-reports-html-generator');
-const { createAllTimeContributions } = require('../generators/html/all-contributions-html-generator');
 const { createHtmlReports } = require('../generators/html/contributions-report-html-generator');
 const { createIndexHtml } = require('../generators/html/landing-page-html-generator');
 const { createGlossaryHtml } = require('../generators/html/glossary-html-generator');
@@ -17,20 +26,20 @@ async function main() {
 
   const cacheFile = path.join(dataDir, 'pr-cache.json');
   const dataFile = path.join(dataDir, 'all-contributions.json');
+  const commitCacheFile = path.join(dataDir, 'commit-cache.json');
 
   let prCache = new Set();
 
+  // Load PR cache
   try {
     const cacheData = await fs.readFile(cacheFile, 'utf8');
     prCache = new Set(JSON.parse(cacheData));
-    console.log('Loaded PR cache from file.');
+    console.log('Loaded Pull Request PR cache from file.');
   } catch (e) {
-    if (e.code !== 'ENOENT') {
-      console.error('Failed to load PR cache:', e);
-    }
+    if (e.code !== 'ENOENT') console.error('Failed to load Pull Request PR cache:', e);
   }
 
-  const commitCacheFile = path.join(dataDir, 'commit-cache.json');
+  // Load persistent commit cache
   let commitCacheFromDisk = new Map();
   try {
     const commitCacheData = await fs.readFile(commitCacheFile, 'utf8');
@@ -49,17 +58,12 @@ async function main() {
 
   try {
     let allContributions = {};
-
     try {
       const data = await fs.readFile(dataFile, 'utf8');
       allContributions = JSON.parse(data);
       console.log('Loaded existing contributions data.');
     } catch (e) {
-      if (e.code !== 'ENOENT') {
-        console.error('Failed to load contributions data:', e);
-      } else {
-        console.log('No existing data file found. Starting fresh.');
-      }
+      if (e.code !== 'ENOENT') console.error('Failed to load contributions data:', e);
     }
 
     const cacheStats = await fs.stat(dataFile).catch(() => null);
@@ -67,10 +71,9 @@ async function main() {
     const today = new Date();
 
     let fetchStartYear;
-
     if (!lastUpdate) {
-      // If no local data exists, pass undefined to trigger Auto-Discovery in the fetcher
       fetchStartYear = undefined;
+      prCache = new Set();
       console.log('First run - triggering auto-discovery of GitHub join date');
     } else {
       const lastUpdateYear = lastUpdate.getFullYear();
@@ -91,17 +94,9 @@ async function main() {
         fetchStartYear = currentYear - 1;
         console.log('Last month update - fetching last two years');
       } else {
-        // For older updates, default to currentYear - 1 as a safe buffer
-        fetchStartYear = currentYear - 1;
+        fetchStartYear = lastUpdateYear - 1;
         console.log(`Older update - fetching from: ${fetchStartYear}`);
       }
-    }
-
-    if (!lastUpdate) {
-      prCache = new Set();
-      console.log(
-        'No existing contributions file — clearing persistent PR cache for a full fetch.'
-      );
     }
 
     const mergedCommitCache = new Map();
@@ -121,10 +116,7 @@ async function main() {
       collaborations: [],
     };
 
-    console.log(
-      'Preserving existing contributions by category (enforcing hierarchy: reviewedPrs/coAuthoredPrs > collaborations).'
-    );
-
+    console.log('Preserving existing contributions by category (enforcing hierarchy).');
     const globalLoadedBy = new Map();
 
     const categoryOrder = Object.keys(finalContributions);
@@ -144,27 +136,25 @@ async function main() {
           if (higherTier.has(type)) {
             finalContributions[type].push(item);
             seen.add(type);
-            globalLoadedBy.set(url, seen);
           } else {
             const hasHigher = Array.from(seen).some((c) => higherTier.has(c));
             if (!hasHigher) {
               finalContributions[type].push(item);
               seen.add(type);
-              globalLoadedBy.set(url, seen);
             }
           }
+          globalLoadedBy.set(url, seen);
         }
       }
     }
 
     console.log('Merging newly fetched contributions (enforcing category hierarchy).');
-
     for (const type of Object.keys(newContributions)) {
       if (Array.isArray(newContributions[type])) {
         for (const item of newContributions[type]) {
           const url = item.url;
-
           const existingIndex = finalContributions[type].findIndex((i) => i.url === url);
+
           if (existingIndex !== -1) {
             finalContributions[type][existingIndex] = item;
             const s = globalLoadedBy.get(url) || new Set();
@@ -184,18 +174,16 @@ async function main() {
           if (higherTier.has(type)) {
             const idx = finalContributions['collaborations'].findIndex((i) => i.url === url);
             if (idx !== -1) finalContributions['collaborations'].splice(idx, 1);
-
             finalContributions[type].push(item);
             seen.add(type);
-            globalLoadedBy.set(url, seen);
           } else {
             const hasHigher = Array.from(seen).some((c) => higherTier.has(c));
             if (!hasHigher) {
               finalContributions[type].push(item);
               seen.add(type);
-              globalLoadedBy.set(url, seen);
             }
           }
+          globalLoadedBy.set(url, seen);
         }
       }
     }
@@ -206,25 +194,22 @@ async function main() {
 
     await fs.writeFile(dataFile, JSON.stringify(finalContributions, null, 2), 'utf8');
     const grouped = groupContributionsByQuarter(finalContributions);
+
+    // Generation
     await writeMarkdownFiles(grouped);
     const quarterlyHtmlLinks = await writeHtmlFiles(grouped);
     await createStatsReadme(finalContributions);
-    await createIndexHtml();
-    await createAllTimeContributions(finalContributions);
+    await createIndexHtml(finalContributions);
     await createHtmlReports(quarterlyHtmlLinks);
     await createGlossaryHtml();
 
+    // Cache persistence
     await fs.writeFile(cacheFile, JSON.stringify(Array.from(updatedPrCache)), 'utf8');
-
-    try {
-      const obj = {};
-      for (const [k, v] of usedCommitCache || mergedCommitCache) {
-        obj[k] = v;
-      }
-      await fs.writeFile(commitCacheFile, JSON.stringify(obj, null, 2), 'utf8');
-    } catch (e) {
-      console.error('Failed to persist commit cache:', e);
+    const commitCacheObj = {};
+    for (const [k, v] of usedCommitCache || mergedCommitCache) {
+      commitCacheObj[k] = v;
     }
+    await fs.writeFile(commitCacheFile, JSON.stringify(commitCacheObj, null, 2), 'utf8');
 
     console.log('Contributions update completed successfully.');
   } catch (e) {
