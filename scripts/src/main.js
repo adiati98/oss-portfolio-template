@@ -9,6 +9,7 @@ const { writeHtmlFiles } = require('../generators/html/quarterly-reports-html-ge
 const { createAllTimeContributions } = require('../generators/html/all-contributions-html-generator');
 const { createHtmlReports } = require('../generators/html/contributions-report-html-generator');
 const { createIndexHtml } = require('../generators/html/landing-page-html-generator');
+const { createGlossaryHtml } = require('../generators/html/glossary-html-generator');
 
 async function main() {
   const dataDir = 'data';
@@ -211,6 +212,7 @@ async function main() {
     await createIndexHtml();
     await createAllTimeContributions(finalContributions);
     await createHtmlReports(quarterlyHtmlLinks);
+    await createGlossaryHtml();
 
     await fs.writeFile(cacheFile, JSON.stringify(Array.from(updatedPrCache)), 'utf8');
 
