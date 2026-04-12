@@ -3742,7 +3742,7 @@
   "/repos/mautic/user-documentation/pulls/670": {
     "firstCommitDate": null,
     "commitCount": 0,
-    "prUpdatedAt": "2026-03-31T10:31:14Z"
+    "prUpdatedAt": "2026-04-11T09:12:38Z"
   },
   "/repos/OpenSource-Communities/guestbook/pulls/925": {
     "firstCommitDate": null,
@@ -3812,7 +3812,7 @@
   "/repos/mautic/user-documentation/pulls/542": {
     "firstCommitDate": null,
     "commitCount": 0,
-    "prUpdatedAt": "2026-03-05T11:08:16Z"
+    "prUpdatedAt": "2026-04-11T09:15:53Z"
   },
   "/repos/Virtual-Coffee/virtualcoffee.io/pulls/1422": {
     "firstCommitDate": null,
@@ -3903,5 +3903,15 @@
     "firstCommitDate": "2026-01-15T13:52:53Z",
     "commitCount": 2,
     "prUpdatedAt": "2026-03-19T10:41:32Z"
+  },
+  "/repos/OpenSource-Communities/guestbook/pulls/947": {
+    "firstCommitDate": null,
+    "commitCount": 0,
+    "prUpdatedAt": "2026-04-11T08:48:53Z"
+  },
+  "/repos/mautic/user-documentation/pulls/600": {
+    "firstCommitDate": null,
+    "commitCount": 0,
+    "prUpdatedAt": "2026-04-11T09:15:21Z"
   }
 }
