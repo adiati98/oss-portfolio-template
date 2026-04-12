@@ -6,21 +6,28 @@ const targets = ['data', 'contributions/markdown-generated', 'contributions/html
 const cleanFolder = (dirPath, isRoot = true) => {
   if (!fs.existsSync(dirPath)) return;
 
+  const stats = fs.statSync(dirPath);
+
+  // Handle individual files in the targets array
+  if (stats.isFile()) {
+    fs.unlinkSync(dirPath);
+    console.log(`🗑️ Deleted File: ${dirPath}`);
+    return;
+  }
+
+  // If it's a directory, proceed with cleaning
   const items = fs.readdirSync(dirPath);
 
   items.forEach((item) => {
     const fullPath = path.join(dirPath, item);
 
     if (fs.statSync(fullPath).isDirectory()) {
-      // Recursively clean subfolders
       cleanFolder(fullPath, false);
-      // Delete the subfolder itself once empty
       if (fs.readdirSync(fullPath).length === 0) {
         fs.rmdirSync(fullPath);
         console.log(`📂 Removed Folder: ${fullPath}`);
       }
     } else {
-      // Delete files, but protect .gitkeep in the root directory
       if (isRoot && item === '.gitkeep') {
         return;
       }
