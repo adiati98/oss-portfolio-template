@@ -94,7 +94,50 @@ function getCommonBaseCss() {
 // --- 2. FUNCTIONS FOR EACH HTML GENERATOR ---
 
 /**
- * Generates the CSS block for the <style> tag in the All-Time Contributions and Landing Page head.
+ * Generates the CSS block for the Glossary page (glossary.html).
+ */
+function getGlossaryStyleCss() {
+  return dedent`
+    ${getCommonBaseCss()}
+    
+    .glossary-content {
+      line-height: 1.8;
+    }
+
+    /* Monospace font for logic or technical terms */
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.9em;
+      background-color: ${COLORS.primary[5]};
+      padding: 0.2rem 0.4rem;
+      border-radius: 0.25rem;
+    }
+
+    /* Smooth scroll for anchor links */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Highlight the section when navigating via URL hash (#) */
+    :target {
+      background-color: ${COLORS.primary[5]};
+      border-radius: 0.5rem;
+      transition: background-color 0.5s ease;
+    }
+
+    .metric-section {
+      transition: transform 0.2s ease-in-out;
+    }
+
+    /* Target highlight for the heading specifically */
+    :target h3 {
+      color: ${COLORS.primary.rgb};
+    }
+  `;
+}
+
+/**
+ * Generates the CSS block for the <style> tag in the Landing Page head.
  * @returns {string} The CSS string.
  */
 function getIndexStyleCss() {
@@ -366,4 +409,5 @@ module.exports = {
   getReportStyleCss,
   getIndexStyleCss,
   getReportsListStyleCss,
+  getGlossaryStyleCss,
 };
