@@ -94,73 +94,37 @@ function getCommonBaseCss() {
 // --- 2. FUNCTIONS FOR EACH HTML GENERATOR ---
 
 /**
- * Generates the CSS block for the Glossary page (glossary.html).
- */
-function getGlossaryStyleCss() {
-  return dedent`
-    ${getCommonBaseCss()}
-    
-    .glossary-content {
-      line-height: 1.8;
-    }
-
-    /* Monospace font for logic or technical terms */
-    code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 0.9em;
-      background-color: ${COLORS.primary[5]};
-      padding: 0.2rem 0.4rem;
-      border-radius: 0.25rem;
-    }
-
-    /* Smooth scroll for anchor links */
-    html {
-      scroll-behavior: smooth;
-    }
-
-    /* Highlight the section when navigating via URL hash (#) */
-    :target {
-      background-color: ${COLORS.primary[5]};
-      border-radius: 0.5rem;
-      transition: background-color 0.5s ease;
-    }
-
-    .metric-section {
-      transition: transform 0.2s ease-in-out;
-    }
-
-    /* Target highlight for the heading specifically */
-    :target h3 {
-      color: ${COLORS.primary.rgb};
-    }
-  `;
-}
-
-/**
- * Generates the CSS block for the <style> tag in the Landing Page head.
- * @returns {string} The CSS string.
+ * Generates the CSS block for the Landing Page head.
  */
 function getIndexStyleCss() {
   return dedent`
     ${getCommonBaseCss()}
-    /* Feature card specific overrides at landing page*/
-    .feature-card:hover { 
-      border-color: ${COLORS.primary.rgb} !important; 
-      box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1); 
+
+    /* Metric Card Overrides */
+    .metric-card-hover {
+      transition: all 0.2s ease-in-out;
     }
-    .feature-card svg { 
-      width: 1.75rem; 
-      height: 1.75rem; 
-      display: block; 
+    .metric-card-hover:hover {
+      transform: translateY(-4px);
+      border-color: ${COLORS.primary.rgb} !important;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
     }
 
-    /* Base styles for the link */
+    /* Table & Row Hovers for Activity Feed */
+    .table-row-hover {
+      transition: background-color 0.15s ease-in-out;
+    }
+    .table-row-hover:hover {
+      background-color: ${COLORS.primary[5]} !important;
+    }
+
+    /* Base styles for the report navigation link */
     a.browse-reports {
       color: ${COLORS.text.secondary};
       text-decoration: none;
     }
 
-    /* Hover state */
+    /* Hover state for report navigation link */
     a.browse-reports:hover {
       color: ${COLORS.text.primary};
       text-decoration: underline;
@@ -193,8 +157,7 @@ function getIndexStyleCss() {
 }
 
 /**
- * Generates the CSS block for the <style> tag in the Quarterly Reports List (reports.html) HTML head.
- * @returns {string} The CSS string.
+ * Generates the CSS block for the Quarterly Reports List (reports.html).
  */
 function getReportsListStyleCss() {
   return dedent`
@@ -257,8 +220,7 @@ function getReportsListStyleCss() {
 }
 
 /**
- * Generates the CSS block for the <style> tag in the Quarterly Report HTML head.
- * @returns {string} The CSS string.
+ * Generates the CSS block for the Quarterly Report HTML head.
  */
 function getReportStyleCss() {
   return dedent`
@@ -278,7 +240,6 @@ function getReportStyleCss() {
       outline-offset: 2px;
     }
 
-    /* Keeps icon and text aligned horizontally inside summary */
     summary .inline-flex {
       display: inline-flex;
       align-items: center;
@@ -347,7 +308,6 @@ function getReportStyleCss() {
     .report-table tbody tr.bg-white { background-color: #ffffff; }
     .report-table tbody tr.bg-gray-50 { background-color: #f9fafb; }
 
-    /* Table Header Sorting Alignment */
     .th-content {
       display: inline-flex;
       align-items: center;
@@ -363,7 +323,6 @@ function getReportStyleCss() {
       line-height: 1;
     }
 
-    /* Highlight the arrow for standard and custom status sorts */
     th.sort-asc .sort-icon,
     th.sort-desc .sort-icon,
     th.sort-custom1 .sort-icon,
@@ -373,7 +332,6 @@ function getReportStyleCss() {
       font-weight: bold;
     }
 
-    /* Search Bar Icon Positioning */
     .icon-input-container {
       position: relative;
     }
@@ -388,7 +346,6 @@ function getReportStyleCss() {
       pointer-events: none;
     }
 
-    /* Mobile Screen Optimization (320px screens) */
     @media (max-width: 400px) {
       summary .text-xl {
         font-size: 1.1rem !important;
@@ -401,6 +358,63 @@ function getReportStyleCss() {
         gap: 8px !important;
         margin-left: 4px !important;
       }
+    }
+  `;
+}
+
+/**
+ * Generates the CSS block for the Glossary page (glossary.html).
+ */
+function getGlossaryStyleCss() {
+  return dedent`
+    ${getCommonBaseCss()}
+    
+    .glossary-content {
+      line-height: 1.8;
+    }
+
+    .metric-section {
+      transition: transform 0.2s ease-in-out;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.9em;
+      background-color: ${COLORS.primary[5]};
+      padding: 0.2rem 0.4rem;
+      border-radius: 0.25rem;
+    }
+
+    .group:hover .rounded-full, 
+    .group:hover .w-2 {
+      filter: brightness(1.1);
+      transform: scaleX(1.2);
+      transition: all 0.2s ease;
+    }
+
+    .intro-text {
+      color: ${COLORS.text.secondary};
+      position: relative;
+      padding: 0 2rem;
+    }
+
+    @media (max-width: 640px) {
+      .intro-text {
+        padding: 0;
+        font-size: 1.125rem;
+      }
+    }
+
+    /* Highlight the section when navigating via URL hash (#) */
+    :target {
+      background-color: ${COLORS.primary[5]};
+      border-radius: 0.5rem;
+      transition: background-color 0.5s ease;
+    }
+
+    /* Target highlight for the heading specifically */
+    :target h3 {
+      color: ${COLORS.primary.rgb};
     }
   `;
 }
