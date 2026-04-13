@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-04-13
+
+### Changed
+
+- **Contribution-centric landing page**: Promoted the comprehensive contribution visualization to the root `index.html`.
+- **Breaking Change (URL Restructuring)**: Moved the detailed contribution view from `all-contributions.html` to the primary landing page (`index.html`). Users hosting this portfolio should update any external links accordingly, if necessary.
+- **UI and accessibility improvements**: Refined the layout for better scannability and increased font sizes for small text elements to improve overall readability.
+- **Logic integration**: Consolidated the contribution generation logic into the main index generator.
+
+### Added
+
+- **Glossary page**: Created a standalone Glossary page that provides a comprehensive explanation of terms and categories used to track open source impact. It details how contribution data is collected, sorted, and calculated.
+
+### Removed
+
+- **Redundant generator**: Removed `all-contributions-html-generator.js` as its functionality is now handled by the main index generator.
+
 ## [1.1.1] - 2026-04-13
 
 ### Fixed
