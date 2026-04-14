@@ -1,18 +1,11 @@
 const fs = require('fs/promises');
 const path = require('path');
 const prettier = require('prettier');
-
-// Import the dedent utility
 const { dedent } = require('../../utils/dedent');
-
-// Import configuration
 const { GITHUB_USERNAME, BASE_DIR } = require('../../config/config');
-
-// Import navbar and footer
 const { createNavHtml } = require('../../components/navbar');
 const { createFooterHtml } = require('../../components/footer');
-
-// Import constants and SVGs
+const { PERSONA_CATEGORIES, DEFAULT_PERSONA } = require('../../metadata/personas');
 const {
   RIGHT_ARROW_SVG,
   FAVICON_SVG_ENCODED,
@@ -20,8 +13,6 @@ const {
   PULL_REQUEST_LARGE_SVG,
   INFO_ICON_SVG,
 } = require('../../config/constants');
-
-// Import style generators
 const { getIndexStyleCss } = require('../css/style-generator');
 
 const htmlBaseDir = path.join(BASE_DIR, 'html-generated');
@@ -37,49 +28,20 @@ function determinePersona(counts) {
   const grandTotal =
     prCount + issueCount + reviewedPrCount + coAuthoredPrCount + collaborationCount;
 
-  const personaCategories = [
-    {
-      title: 'Community Mentor',
-      desc: 'Expert advocate for code quality and peer development. Code review and technical guidance ensure high standards across the community.',
-      count: reviewedPrCount,
-      priority: 1,
-    },
-    {
-      title: 'Core Contributor',
-      desc: 'Main driver of project development. Responsible for moving features from concept to production through robust code and resolving complex bugs to ensure software stability.',
-      count: prCount,
-      priority: 2,
-    },
-    {
-      title: 'Project Architect',
-      desc: 'Strategic problem-solver focused on technical discovery. Skilled at identifying critical system issues and defining feature planning that shapes the long-term technical roadmap.',
-      count: issueCount,
-      priority: 3,
-    },
-    {
-      title: 'Collaborative Partner',
-      desc: 'Focused on shared project success. Pair programming and co-authoring code delivers high-impact value through collective development effort.',
-      count: coAuthoredPrCount,
-      priority: 4,
-    },
-    {
-      title: 'Ecosystem Partner',
-      desc: 'Community builder focused on technical discussion and engagement. Facilitates collaboration through project discussions to ensure the open source ecosystem remains vibrant and interconnected.',
-      count: collaborationCount,
-      priority: 5,
-    },
-  ];
-
   if (grandTotal === 0) {
-    return {
-      title: 'Open Source Contributor',
-      desc: 'Active member of the global open source community.',
-    };
+    return DEFAULT_PERSONA;
   }
 
-  return personaCategories.reduce((prev, curr) => {
-    if (curr.count > prev.count) return curr;
-    if (curr.count === prev.count && curr.priority < prev.priority) return curr;
+  return PERSONA_CATEGORIES.reduce((prev, curr) => {
+    const currentCount = counts[curr.key] || 0;
+    const prevCount = counts[prev.key] || 0;
+
+    // If current category has more contributions, it becomes the assigned persona
+    if (currentCount > prevCount) return curr;
+
+    // If counts are equal, the one with the higher priority (lower number) wins
+    if (currentCount === prevCount && curr.priority < prev.priority) return curr;
+
     return prev;
   });
 }
@@ -104,6 +66,14 @@ async function createIndexHtml(finalContributions = {}) {
 
   const grandTotal =
     prCount + issueCount + reviewedPrCount + collaborationCount + coAuthoredPrCount;
+
+  const countsDict = {
+    prCount,
+    issueCount,
+    reviewedPrCount,
+    coAuthoredPrCount,
+    collaborationCount,
+  };
 
   const allItems = [
     ...(finalContributions.pullRequests || []),
@@ -184,13 +154,7 @@ async function createIndexHtml(finalContributions = {}) {
           .join('')
       : '<p class="text-sm text-slate-500 font-medium italic">No activity recorded yet.</p>';
 
-  const { title: personaTitle, desc: personaDesc } = determinePersona({
-    prCount,
-    issueCount,
-    reviewedPrCount,
-    coAuthoredPrCount,
-    collaborationCount,
-  });
+  const { title: personaTitle, desc: personaDesc } = determinePersona(countsDict);
 
   const htmlContent = dedent`
     <!DOCTYPE html>
@@ -291,13 +255,13 @@ async function createIndexHtml(finalContributions = {}) {
 
               <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
                 <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm min-w-0">
-                  <h2 class="text-sm uppercase tracking-widest font-black text-slate-500 mb-4">Primary Focus Projects</h2>
+                  <h2 class="text-sm uppercase tracking-widest font-black text-slate-800 mb-4">Primary Focus Projects</h2>
                   <div class="divide-y divide-slate-100 min-w-0">${topReposHtml}</div>
                 </div>
                 
                 <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
                   <div>
-                    <h2 class="text-sm uppercase tracking-widest font-black text-slate-500 mb-4">
+                    <h2 class="text-sm uppercase tracking-widest font-black text-slate-800 mb-4">
                       Collaboration Profile
                     </h2>
                     <div>
@@ -321,7 +285,7 @@ async function createIndexHtml(finalContributions = {}) {
               </div>
 
               <section class="mt-16 pt-12 border-t border-slate-100">
-                <h2 class="text-sm uppercase tracking-[0.2em] font-black text-slate-500 mb-8 text-center">Explore The Detailed Quarterly Reports</h2>
+                <h2 class="text-sm uppercase tracking-[0.2em] font-black text-slate-800 mb-8 text-center">Explore The Detailed Quarterly Reports</h2>
                 <div class="flex justify-center">
                   <a href="reports.html" class="group max-w-sm w-full p-6 bg-slate-50 rounded-2xl border border-slate-200 hover:border-indigo-400 transition-all flex flex-col justify-between shadow-sm">
                     <div class="flex items-center space-x-4 mb-4">

@@ -3,70 +3,32 @@ const path = require('path');
 
 // Import configuration and metadata
 const { BASE_DIR, GITHUB_USERNAME } = require('../../config/config');
-const { GLOSSARY_CONTENT } = require('../../../metadata/glossary');
+const { PERSONA_CATEGORIES, DEFAULT_PERSONA } = require('../../metadata/personas');
+const { GLOSSARY_CONTENT } = require('../../metadata/glossary');
 
 const MARKDOWN_OUTPUT_DIR_NAME = 'markdown-generated';
 const MARKDOWN_README_FILENAME = 'README.md';
 const MARKDOWN_GLOSSARY_FILENAME = 'glossary.md';
 
 /**
- * Determines the contributor's persona title and description.
+ * Determines persona based on metadata and counts.
  */
 function determinePersona(counts) {
-  const { prCount, issueCount, reviewedPrCount, coAuthoredPrCount, collaborationCount } = counts;
+  const grandTotal = Object.values(counts).reduce((a, b) => a + b, 0);
+  if (grandTotal === 0) return DEFAULT_PERSONA;
 
-  const grandTotal =
-    prCount + issueCount + reviewedPrCount + coAuthoredPrCount + collaborationCount;
+  return PERSONA_CATEGORIES.reduce((prev, curr) => {
+    const currCount = counts[curr.key] || 0;
+    const prevCount = counts[prev.key] || 0;
 
-  const personaCategories = [
-    {
-      title: 'Community Mentor',
-      desc: 'Expert advocate for code quality and peer development. Code review and technical guidance ensure high standards across the community.',
-      count: reviewedPrCount,
-      priority: 1,
-    },
-    {
-      title: 'Core Contributor',
-      desc: 'Main driver of project development. Responsible for moving features from concept to production through robust code and resolving complex bugs to ensure software stability.',
-      count: prCount,
-      priority: 2,
-    },
-    {
-      title: 'Project Architect',
-      desc: 'Strategic problem-solver focused on technical discovery. Skilled at identifying critical system issues and defining feature planning that shapes the long-term technical roadmap.',
-      count: issueCount,
-      priority: 3,
-    },
-    {
-      title: 'Collaborative Partner',
-      desc: 'Focused on shared project success. Pair programming and co-authoring code delivers high-impact value through collective development effort.',
-      count: coAuthoredPrCount,
-      priority: 4,
-    },
-    {
-      title: 'Ecosystem Partner',
-      desc: 'Community builder focused on technical discussion and engagement. Facilitates collaboration through project discussions to ensure the open source ecosystem remains vibrant and interconnected.',
-      count: collaborationCount,
-      priority: 5,
-    },
-  ];
-
-  if (grandTotal === 0) {
-    return {
-      title: 'Open Source Contributor',
-      desc: 'Active member of the global open source community.',
-    };
-  }
-
-  return personaCategories.reduce((prev, curr) => {
-    if (curr.count > prev.count) return curr;
-    if (curr.count === prev.count && curr.priority < prev.priority) return curr;
+    if (currCount > prevCount) return curr;
+    if (currCount === prevCount && curr.priority < prev.priority) return curr;
     return prev;
   });
 }
 
 /**
- * Helper: Generates a Unicode progress bar string using Squares
+ * Helper: Generates a Unicode progress bar
  */
 function generateProgressBar(count, total, width) {
   const filledChar = '■';
@@ -90,10 +52,7 @@ async function createStatsReadme(finalContributions) {
   const issueCount = finalContributions.issues?.length || 0;
   const reviewedPrCount = finalContributions.reviewedPrs?.length || 0;
   const collaborationCount = finalContributions.collaborations?.length || 0;
-  const coAuthoredPrs = Array.isArray(finalContributions.coAuthoredPrs)
-    ? finalContributions.coAuthoredPrs
-    : [];
-  const coAuthoredPrCount = coAuthoredPrs.length;
+  const coAuthoredPrCount = (finalContributions.coAuthoredPrs || []).length;
 
   const grandTotal =
     prCount + issueCount + reviewedPrCount + collaborationCount + coAuthoredPrCount;
@@ -106,30 +65,25 @@ async function createStatsReadme(finalContributions) {
   );
 
   // 2. Persona Logic
-  const { title: personaTitle, desc: personaDesc } = determinePersona({
+  const countsDict = {
     prCount,
     issueCount,
     reviewedPrCount,
     coAuthoredPrCount,
     collaborationCount,
-  });
+  };
+  const { title: personaTitle, desc: personaDesc } = determinePersona(countsDict);
 
   const lowerDesc = personaDesc.charAt(0).toLowerCase() + personaDesc.slice(1);
-  const firstLetter = lowerDesc.charAt(0);
-  const article = ['a', 'e', 'i', 'o', 'u'].includes(firstLetter) ? 'An' : 'A';
+  const article = ['a', 'e', 'i', 'o', 'u'].includes(lowerDesc.charAt(0)) ? 'An' : 'A';
 
-  // 3. Stats Helper
+  // 3. Stats Prep
   const getStats = (count) => {
     const BAR_WIDTH = 30;
-    if (grandTotal === 0)
-      return { pct: '0.0%', count: '0', bar: generateProgressBar(0, 0, BAR_WIDTH) };
-
-    const pctVal = (count / grandTotal) * 100;
+    const pctVal = grandTotal === 0 ? 0 : (count / grandTotal) * 100;
     const isMax = count === maxCount && count > 0;
-    const pctStr = pctVal.toFixed(1) + '%';
-
     return {
-      pct: isMax ? `**${pctStr}**` : pctStr,
+      pct: isMax ? `**${pctVal.toFixed(1)}%**` : `${pctVal.toFixed(1)}%`,
       count: isMax ? `**${count}**` : count,
       bar: generateProgressBar(count, grandTotal, BAR_WIDTH),
     };
@@ -148,42 +102,36 @@ async function createStatsReadme(finalContributions) {
     ...(finalContributions.pullRequests || []),
     ...(finalContributions.issues || []),
     ...(finalContributions.reviewedPrs || []),
-    ...coAuthoredPrs,
+    ...(finalContributions.coAuthoredPrs || []),
     ...(finalContributions.collaborations || []),
   ];
 
   const totalUniqueRepos = new Set(allItems.map((item) => item.repo)).size;
-  const repoActivity = allItems.reduce((acc, item) => {
-    acc[item.repo] = (acc[item.repo] || 0) + 1;
-    return acc;
-  }, {});
+  const earliestYear =
+    allItems.length > 0
+      ? Math.min(...allItems.map((i) => new Date(i.date).getFullYear()))
+      : new Date().getFullYear();
 
-  const topThreeRepos = Object.entries(repoActivity)
+  const topThreeRepos = Object.entries(
+    allItems.reduce((acc, item) => {
+      acc[item.repo] = (acc[item.repo] || 0) + 1;
+      return acc;
+    }, {})
+  )
     .sort(([, a], [, b]) => b - a)
     .slice(0, 3);
 
   const topReposMarkdown =
     topThreeRepos.length > 0
       ? topThreeRepos
-          .map(([repo, count], idx) => {
-            const rank = idx + 1;
-            return `${rank}. [**${repo}**](https://github.com/${repo}) (${count} contributions)`;
-          })
+          .map(
+            ([repo, count], idx) =>
+              `${idx + 1}. [**${repo}**](https://github.com/${repo}) (${count} contributions)`
+          )
           .join('\n')
-      : '_No activity recorded yet._';
+      : '_No activity recorded recorded yet._';
 
-  // 5. Dynamic year calculation
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const yearsActive = allItems
-    .map((item) => new Date(item.date).getFullYear())
-    .filter((year) => !isNaN(year) && year >= 2008);
-
-  const earliestYear = yearsActive.length > 0 ? Math.min(...yearsActive) : currentYear;
-  const yearsTracked = currentYear - earliestYear + 1;
-  const generatedAt = now.toLocaleString();
-
-  // 6. Generate Quarterly Links
+  // 5. Generate Quarterly Links (RESTORED LOGIC)
   let reportLinksContent = '## 📂 Detailed Quarterly Reports\n\n';
   try {
     const files = await fs.readdir(markdownBaseDir);
@@ -212,51 +160,36 @@ async function createStatsReadme(finalContributions) {
     reportLinksContent += '_No detailed reports found._\n';
   }
 
-  // 7. BUILD glossary.md CONTENT
-  const personalize = (text) => text.replace(/{{GITHUB_USERNAME}}/g, GITHUB_USERNAME);
-  const groups = GLOSSARY_CONTENT?.sections || [];
+  // 6. Build GLOSSARY.md
+  const personalize = (text) => (text ? text.replace(/{{GITHUB_USERNAME}}/g, GITHUB_USERNAME) : '');
+  const generatedAt = new Date().toLocaleString();
 
   let glossarySectionsMd = '';
+  (GLOSSARY_CONTENT.sections || []).forEach((group) => {
+    let noteHeader = group.items.some((i) => i.entryMethod)
+      ? 'Entry Method'
+      : group.items.some((i) => i.howItIsCalculated)
+        ? 'Calculation Logic'
+        : 'Data Source';
 
-  groups.forEach((group) => {
-    let noteHeader = 'Glossary Note';
-    const hasEntryMethod = group.items.some((i) => i.entryMethod);
-    const hasCalculation = group.items.some((i) => i.howItIsCalculated);
-    const hasSource = group.items.some((i) => i.source);
-
-    if (hasEntryMethod) noteHeader = 'Entry Method';
-    else if (hasCalculation) noteHeader = 'Calculation Logic';
-    else if (hasSource) noteHeader = 'Data Source';
-
-    glossarySectionsMd += `## ${group.title}\n\n`;
-    glossarySectionsMd += `_${personalize(group.description)}_\n\n`;
-    glossarySectionsMd += `| Metric | Description | ${noteHeader} |\n`;
-    glossarySectionsMd += `| :--- | :--- | :--- |\n`;
-
+    glossarySectionsMd += `## ${group.title}\n\n_${personalize(group.description)}_\n\n`;
+    glossarySectionsMd += `| Metric | Description | ${noteHeader} |\n| :--- | :--- | :--- |\n`;
     group.items.forEach((item) => {
       const note = item.entryMethod || item.howItIsCalculated || item.source || '';
       glossarySectionsMd += `| **${item.title}** | ${personalize(item.description)} | ${personalize(note)} |\n`;
     });
-
     glossarySectionsMd += '\n';
   });
 
-  const glossaryContent = `# 📖 Glossary
+  const glossaryMarkdown = `# 📖 Glossary\n\n${personalize(GLOSSARY_CONTENT.subtitle)}\n\n${glossarySectionsMd}\n---\n[← Back to Summary](./${MARKDOWN_README_FILENAME}) | *Last updated: ${generatedAt}*`;
 
-${personalize(GLOSSARY_CONTENT?.subtitle || 'Glossary details for contribution tracking.')}
+  // 7. Build README.md
+  const readmeMarkdown = `# 📈 Open Source Contributions Report
 
-${glossarySectionsMd}
----
-[← Back to Summary](./${MARKDOWN_README_FILENAME}) | *Last updated: ${generatedAt}*
-`;
-
-  // 8. Build Markdown Content for README.md
-  let markdownContent = `# 📈 Open Source Contributions Report
-
-Organized by calendar quarter, these reports track [**${GITHUB_USERNAME}**](https://github.com/${GITHUB_USERNAME})'s external open source involvement. This portfolio aggregates key community activities across Merged PRs, Issues, Reviewed PRs, Co-Authored PRs, and general Collaborations.
+Organized by calendar quarter, these reports track [**${GITHUB_USERNAME}**](https://github.com/${GITHUB_USERNAME})'s involvement.
 
 > [!IMPORTANT]
-> To understand the criteria used for these metrics or to see how specific categories are calculated, please refer to the [**Glossary**](./${MARKDOWN_GLOSSARY_FILENAME}).
+> Refer to the [**Glossary**](./${MARKDOWN_GLOSSARY_FILENAME}) for metric calculations.
 
 ---
 
@@ -267,11 +200,11 @@ Organized by calendar quarter, these reports track [**${GITHUB_USERNAME}**](http
 | Context | Detail |
 | :--- | :--- |
 | 🏗️ **Unique Repositories** | **${totalUniqueRepos}** projects |
-| 📅 **Active Since** | **${earliestYear}** (${yearsTracked} years tracked) |
+| 📅 **Active Since** | **${earliestYear}** |
 
-### 🧩 Contribution Distribution
+### 🧩 Distribution
 
-| Category | Progress | Count | Percentage |
+| Category | Progress | Count | % |
 | :--- | :--- | :--- | :--- |
 | **Merged PRs** | \`${stats.prs.bar}\` | ${stats.prs.count} | ${stats.prs.pct} |
 | **Issues** | \`${stats.issues.bar}\` | ${stats.issues.count} | ${stats.issues.pct} |
@@ -292,15 +225,13 @@ ${article} ${lowerDesc}
 ${reportLinksContent}
 
 ---
-*Report last generated on: ${generatedAt}*
-`;
+*Report last generated on: ${generatedAt}*`;
 
-  // 9. Write the files
-  await fs.writeFile(README_PATH, markdownContent, 'utf8');
-  await fs.writeFile(GLOSSARY_PATH, glossaryContent, 'utf8');
+  // 8. Write Files
+  await fs.writeFile(README_PATH, readmeMarkdown, 'utf8');
+  await fs.writeFile(GLOSSARY_PATH, glossaryMarkdown, 'utf8');
 
-  console.log(`Written aggregate README: ${README_PATH}`);
-  console.log(`Written glossary markdown: ${GLOSSARY_PATH}`);
+  console.log(`Markdown generated: README.md and glossary.md`);
 }
 
 module.exports = { createStatsReadme };

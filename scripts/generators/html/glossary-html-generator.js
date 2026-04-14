@@ -6,7 +6,7 @@ const { createNavHtml } = require('../../components/navbar');
 const { createFooterHtml } = require('../../components/footer');
 const { GITHUB_USERNAME, BASE_DIR } = require('../../config/config');
 const { COLORS, FAVICON_SVG_ENCODED } = require('../../config/constants');
-const { GLOSSARY_CONTENT } = require('../../../metadata/glossary');
+const { GLOSSARY_CONTENT } = require('../../metadata/glossary');
 const { getGlossaryStyleCss } = require('../css/style-generator');
 
 async function createGlossaryHtml() {
@@ -24,10 +24,10 @@ async function createGlossaryHtml() {
     if (!text) return '';
     return (
       text
-        // Transform backticks into a styled span
+        // 1. Transform backticks into a styled span
         .replace(/`(.*?)`/g, '<span class="glossary-inline-code">$1</span>')
 
-        // 2. Bold labels - handled via CSS for color/background
+        // 2. Bold labels
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
 
         // 3. List items: Wrap lines starting with '*' or '-' in <li>
@@ -39,10 +39,10 @@ async function createGlossaryHtml() {
         // 4. Wrap <li> groups in <ul>
         .replace(/(<li.*?>.*?<\/li>)+/g, '<ul class="my-3 space-y-1 text-indigo-600">$1</ul>')
 
-        // 5. Cleanup: Remove extra whitespace created by the regex between tags
+        // 5. Cleanup
         .replace(/<\/ul>\s+/g, '</ul>')
 
-        // 6. Convert remaining newlines to <br> for standard paragraphs
+        // 6. Convert remaining newlines to <br>
         .replace(/\n(?!<ul|<li)/g, '<br>')
     );
   };
@@ -52,15 +52,14 @@ async function createGlossaryHtml() {
     .map((group) => {
       const itemsHtml = group.items
         .map((item) => {
-          // Inside the itemsHtml.map function
           const description = processText(item.description);
 
-          // 1. Find the content from any of the three possible keys
+          // Find the content from possible keys
           const rawNote = item.entryMethod || item.howItIsCalculated || item.source || '';
           const processedNote = processText(rawNote);
 
-          // 2. Determine the Label dynamically
-          let label = 'Glossary Note'; // The "middle ground" fallback
+          // Determine the Label dynamically
+          let label = 'Glossary Note';
           if (item.entryMethod) label = 'Entry Method';
           if (item.howItIsCalculated) label = 'Calculation Logic';
           if (item.source) label = 'Data Source';
@@ -148,6 +147,8 @@ async function createGlossaryHtml() {
 
   const formattedContent = await prettier.format(htmlContent, { parser: 'html' });
   await fs.writeFile(outputPath, formattedContent, 'utf8');
+
+  console.log('Generated glossary page successfully at: ' + outputPath);
 }
 
 module.exports = { createGlossaryHtml };
