@@ -24,22 +24,25 @@ async function createGlossaryHtml() {
     if (!text) return '';
     return (
       text
-        // 1. Bold labels: Use indigo-800 and font-black
-        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-indigo-800 font-black">$1</strong>')
+        // Transform backticks into a styled span
+        .replace(/`(.*?)`/g, '<span class="glossary-inline-code">$1</span>')
 
-        // 2. List items: Wrap lines starting with '*' in <li>
+        // 2. Bold labels - handled via CSS for color/background
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+
+        // 3. List items: Wrap lines starting with '*' or '-' in <li>
         .replace(
-          /^\s*\*\s+(.*)$/gm,
+          /^\s*[*|-]\s+(.*)$/gm,
           '<li class="ml-4 list-disc list-inside text-indigo-600">$1</li>'
         )
 
-        // 3. Wrap <li> groups in <ul>
+        // 4. Wrap <li> groups in <ul>
         .replace(/(<li.*?>.*?<\/li>)+/g, '<ul class="my-3 space-y-1 text-indigo-600">$1</ul>')
 
-        // 4. Cleanup: Remove extra whitespace created by the regex between tags
+        // 5. Cleanup: Remove extra whitespace created by the regex between tags
         .replace(/<\/ul>\s+/g, '</ul>')
 
-        // 5. Convert remaining newlines to <br> for standard paragraphs
+        // 6. Convert remaining newlines to <br> for standard paragraphs
         .replace(/\n(?!<ul|<li)/g, '<br>')
     );
   };
@@ -74,7 +77,7 @@ async function createGlossaryHtml() {
                   ${description}
                 </p>
                 
-                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6 overflow-x-auto">
+                <div class="glossary-code-block p-6 overflow-x-auto rounded-2xl">
                   <span class="block text-xs uppercase tracking-widest text-slate-400 mb-3 font-black font-mono">
                     ${label}
                   </span>
