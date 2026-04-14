@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Breaking Change (URL Restructuring)**: Moved the detailed contribution view from `all-contributions.html` to the primary landing page (`index.html`). Users hosting this portfolio should update any external links accordingly, if necessary.
 - **UI and accessibility improvements**: Refined the layout for better scannability and increased font sizes for small text elements to improve overall readability.
 - **Logic integration**: Consolidated the contribution generation logic into the main index generator.
+- **Metadata centralization**: Moved persona categories and definitions to a dedicated metadata folder to decouple data from generation logic.
 
 ### Added
 
