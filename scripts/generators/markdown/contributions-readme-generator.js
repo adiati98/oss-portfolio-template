@@ -129,7 +129,7 @@ async function createStatsReadme(finalContributions) {
               `${idx + 1}. [**${repo}**](https://github.com/${repo}) (${count} contributions)`
           )
           .join('\n')
-      : '_No activity recorded recorded yet._';
+      : '_No activity recorded yet._';
 
   // 5. Generate Quarterly Links (RESTORED LOGIC)
   let reportLinksContent = '## 📂 Detailed Quarterly Reports\n\n';
