@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node scripts/src/main.js",
     "clean": "node scripts/src/clean.js",
+    "refresh": "git restore . && git clean -fd",
     "format": "prettier --write \"**/*.js\" \"**/*.json\" \"**/*.html\" \"**/*.md\""
   },
   "engines": {
