@@ -18,21 +18,21 @@ const GLOSSARY_CONTENT = {
           description:
             'The total number of all recorded contributions since the very first activity on GitHub.',
           howItIsCalculated:
-            'The grand total of merged PRs, issues, reviewed PRs, co-authored PRs, and community collaborations.',
+            'Adds the grand total of merged PRs, issues, reviewed PRs, co-authored PRs, and community collaborations.',
         },
         {
           id: 'activeSince',
           title: 'Active Since',
           description: 'The year of the first recorded contribution found on GitHub.',
-          source:
-            'The date of the very first contribution found in the data, setting the starting point for the history.',
+          howItIsCalculated:
+            'Identifies the date of the very first contribution found in the data to set the starting point for the history.',
         },
         {
           id: 'totalImpactedRepos',
           title: 'Impacted Repos',
           description: 'The total number of open source projects with at least one contribution.',
           howItIsCalculated:
-            'The count of every repository owned by others that contains at least one contribution found in the data.',
+            'Identifies every unique external repository containing at least one recorded contribution.',
         },
         {
           id: 'primaryFocusProjects',
@@ -40,14 +40,14 @@ const GLOSSARY_CONTENT = {
           description:
             'The top three repositories where the highest contributions have occurred since the first year of contribution.',
           howItIsCalculated:
-            'The system ranks all tracked repositories by total lifetime contribution volume and identifies the top three as the primary projects of contribution.',
+            'Ranks all tracked repositories by lifetime contribution volume and selects the top three.',
         },
         {
           id: 'persona',
           title: 'Collaboration Profile',
           description: 'A role assigned based on the primary way of contributing to the community.',
           howItIsCalculated:
-            'The system analyzes which type of work is performed most frequently. For example, a high volume of reviewed PRs results in a "Community Mentor" profile.',
+            'Analyzes contribution frequency across all categories to assign a role, such as "Community Mentor" for high review volumes.',
         },
       ],
     },
@@ -78,7 +78,7 @@ const GLOSSARY_CONTENT = {
           description:
             'A summary that shows the total work and the projects involved during a specific three-month period.',
           howItIsCalculated:
-            'The system adds up all types of work and the number of repositories involved to show the total amount of contribution for that quarter.',
+            'Aggregates all contribution types and unique repositories involved within a specific three-month window.',
         },
         {
           id: 'focusProjects',
@@ -86,14 +86,14 @@ const GLOSSARY_CONTENT = {
           description:
             'The projects that received the most work and attention within each quarter.',
           howItIsCalculated:
-            'The system ranks repositories by the amount of contributions to show where the most effort was spent.',
+            'Ranks repositories by the volume of contributions performed during the quarter.',
         },
         {
           id: 'merged',
           title: 'Merged PRs',
           description: 'A record of PRs that were accepted and added to external repositories.',
           howItIsCalculated:
-            'All work that was finalized (merged). The **Review Period** shows the time from the first proposal to the final acceptance.',
+            'Identifies PRs with a merged status and calculates the **Review Period** as the time from the first proposal to final acceptance.',
         },
         {
           id: 'issues',
@@ -101,14 +101,14 @@ const GLOSSARY_CONTENT = {
           description:
             'A record of technical discoveries, bug reports, and feature proposals created on external repositories.',
           howItIsCalculated:
-            'Includes all authored issue threads regardless of assignment. The **Closing Period** shows the time from the opening of an issue until it is finished.',
+            'Collects all authored issues regardless of assignment. It calculates the **Closing Period** as the time from the initial opening until the issue is finished.',
         },
         {
           id: 'reviewed',
           title: 'Reviewed PRs',
           description: 'A record of formal reviews provided on PRs within external repositories.',
           howItIsCalculated:
-            'The system measures the **Review Period** from the creation of the PR to the final review to highlight efficiency. The **Status** and **Last Update** columns track the current state and the most recent activity.',
+            'Measures the **Review Period** from the creation of the PR to the submission of the formal review, while tracking the **Status** and **Last Update** columns for the current state and the most recent activity.',
         },
         {
           id: 'coAuthored',
@@ -116,15 +116,15 @@ const GLOSSARY_CONTENT = {
           description:
             'A record of PRs where contributions were made directly to the code alongside other developers.',
           howItIsCalculated:
-            'The system identifies credit via co-author commit information. The **Commit Period** spans from the creation of the PR to the first code contribution, indicating when the collaboration started. The **Status** and **Last Update** columns track the current state and the most recent activity.',
+            'Identifies credit via co-author commit information. The **Commit Period** spans from the creation of the PR to the first code contribution to indicate when the collaboration started. The **Status** and **Last Update** columns track the current state and the most recent activity.',
         },
         {
           id: 'collaborations',
           title: 'Collaborations',
           description:
-            'A record of joining discussions within issues or PRs authored by others in external repositories.',
+            'A record of participation in discussions within issues or PRs authored by others in external repositories.',
           howItIsCalculated:
-            'The system tracks engagement with other contributors and maintainers to help move a task toward completion.',
+            'Tracks comments on PRs and issues unless or until they are officially reviewed.',
         },
       ],
     },
