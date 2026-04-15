@@ -15,7 +15,8 @@ const {
  * Only modify the hex values below to change the theme.
  */
 const COLOR_PALETTE = {
-  primary: '#4338CA',
+  primary: '#10b981',
+  // primary: '#4338CA',
   primary900: '#312E81',
   neutral: '#6b7280',
   success: '#10b981',
