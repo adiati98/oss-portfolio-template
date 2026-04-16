@@ -141,7 +141,7 @@ async function createIndexHtml(finalContributions = {}) {
         <div class="flex flex-col sm:flex-row sm:items-start justify-between py-4 border-b border-slate-100 last:border-0 gap-3 sm:gap-4">
           <div class="flex flex-col min-w-0">
             ${owner ? `<span class="text-xs uppercase tracking-[0.15em] text-slate-400 font-black leading-none mb-1.5 block">${owner}</span>` : ''}
-            <a href="https://github.com/${repo}" target="_blank" rel="noopener noreferrer" class="${nameClass} break-all hover:underline underline-offset-4" style="color: ${COLORS.primary.rgb};">
+            <a href="https://github.com/${repo}" target="_blank" rel="noopener noreferrer" class="${nameClass} break-all hover:underline underline-offset-4" style="color: ${getColorValue(COLORS.primary)};">
               ${name}
             </a>
           </div>
@@ -171,13 +171,13 @@ async function createIndexHtml(finalContributions = {}) {
     <body class="bg-white antialiased flex flex-col h-full min-h-full">
       ${navHtml}
       <main class="grow w-full">
-        <header class="pt-24 pb-20 px-6 border-b" style="border-color: ${COLORS.border.light};">
+        <header class="pt-24 pb-20 px-6 border-b" style="border-color: ${getColorValue(COLORS.border.light)};">
           <div class="max-w-4xl mx-auto text-center">
-            <h1 class="text-5xl md:text-7xl font-extrabold mb-8 pt-8" style="color: ${COLORS.primary.rgb};">
+            <h1 class="text-5xl md:text-7xl font-extrabold mb-8 pt-8" style="color: ${getColorValue(COLORS.primary)};">
               Open Source Portfolio
             </h1>
     
-            <h2 class="block text-4xl md:text-5xl font-bold opacity-80 mb-8" style="color: ${COLORS.primary[75]}";>@${GITHUB_USERNAME}</h2>
+            <h2 class="block text-4xl md:text-5xl font-bold opacity-80 mb-8" style="color: ${getColorValue(COLORS.primary[75])}";>@${GITHUB_USERNAME}</h2>
 
             <p class="text-xl md:text-2xl text-gray-600 max-w-2xl mx-auto leading-relaxed font-medium">
               A comprehensive visualization of open source contributions, from high-level impact to granular quarterly details.
@@ -190,7 +190,7 @@ async function createIndexHtml(finalContributions = {}) {
 
             <section>
               <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-                <div style="background-color: ${COLORS.primary.rgb};" class="relative overflow-hidden text-white p-6 sm:p-10 rounded-2xl shadow-xl flex flex-col justify-between border-t-4 border-white/20">
+                <div style="background-color: ${getColorValue(COLORS.primary)};" class="relative overflow-hidden text-white p-6 sm:p-10 rounded-2xl shadow-xl flex flex-col justify-between border-t-4 border-white/20">
                   <div class="absolute right-0 -top-2 opacity-10 rotate-20 w-48 h-48 pointer-events-none">${PULL_REQUEST_LARGE_SVG}</div>
                   <div class="relative z-10 space-y-2">
                     <p class="text-sm uppercase tracking-widest opacity-80 font-bold">Total Impact</p>
@@ -227,9 +227,10 @@ async function createIndexHtml(finalContributions = {}) {
                       ][idx];
                       const s = stats[key];
                       const isHighest = grandTotal > 0 && count === maxCount;
+                      const barOpacity = isHighest ? 'opacity-100' : 'opacity-60';
 
                       const labelStyle = isHighest
-                        ? `style="color: ${COLORS.primary.rgb}; font-weight: 900;"`
+                        ? `style="color: ${getColorValue(COLORS.primary)}; font-weight: 900;"`
                         : 'class="text-slate-800 font-bold"';
 
                       return `
@@ -237,13 +238,13 @@ async function createIndexHtml(finalContributions = {}) {
                       <div class="flex justify-between items-start mb-2">
                         <span ${labelStyle} class="text-lg leading-tight mt-1">${label}</span>
                         <div class="flex flex-col sm:flex-row items-end sm:items-baseline">
-                          <span style="color: ${COLORS.primary.rgb};" class="font-bold ${isHighest ? 'text-2xl sm:text-3xl' : 'text-xl sm:text-2xl'} leading-none">${count}</span>
-                          <span class="text-xs sm:text-sm text-slate-500 ml-0 sm:ml-1 font-mono font-bold">${s.pctStr}</span>
+                          <span style="color: ${getColorValue(COLORS.primary)};" class="font-bold ${isHighest ? 'text-2xl sm:text-3xl' : 'text-xl sm:text-2xl'} leading-none">${count}</span>
+                          <span class="text-xs sm:text-sm text-slate-600 ml-0 sm:ml-1 font-mono font-bold">${s.pctStr}</span>
                         </div>
                       </div>
                       <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden flex">
-                        <div style="width: ${s.pct}%; max-width: ${s.pct}%; background-color: ${COLORS.primary.rgb}; ${s.pct === 0 ? 'display: none;' : ''}" 
-                             class="h-3 rounded-full ${isHighest ? 'opacity-100' : 'opacity-60'} transition-all duration-300">
+                        <div style="width: ${s.pct}%; max-width: ${s.pct}%; background-color: ${getColorValue(COLORS.primary)}; ${s.pct === 0 ? 'display: none;' : ''}" 
+                             class="progress-bar h-3 rounded-full ${barOpacity} transition-all duration-300">
                         </div>
                       </div>
                     </div>`;
@@ -264,18 +265,18 @@ async function createIndexHtml(finalContributions = {}) {
                       Collaboration Profile
                     </h2>
                     <div>
-                      <p style="color: ${COLORS.primary.rgb};" class="text-3xl font-black mb-2 tracking-tight">${personaTitle}</p>
+                      <p style="color: ${getColorValue(COLORS.primary)};" class="text-3xl font-black mb-2 tracking-tight">${personaTitle}</p>
                       <p class="text-md text-slate-500 leading-relaxed">${personaDesc}</p>
                     </div>
                   </div>
                   
                   <div class="mt-6 pt-4 border-t border-slate-100 flex items-start">
-                    <span style="color: ${COLORS.primary.rgb};" class="mr-3 mt-0.5 shrink-0">
+                    <span style="color: ${getColorValue(COLORS.primary)};" class="mr-3 mt-0.5 shrink-0">
                       ${INFO_ICON_SVG}
                     </span>
                     <p class="text-xs text-slate-500 leading-snug">
                       This profile is an assigned category based on contribution activity. 
-                      <a href="glossary.html" class="font-bold underline decoration-slate-300 hover:decoration-current transition-colors" style="color: ${COLORS.primary.rgb};">
+                      <a href="glossary.html" class="font-bold underline decoration-slate-300 hover:decoration-current transition-colors" style="color: ${getColorValue(COLORS.primary)};">
                         Learn more in the Glossary.
                       </a>
                     </p>
@@ -296,7 +297,7 @@ async function createIndexHtml(finalContributions = {}) {
                         <p class="text-xs text-slate-600 font-bold">Quarterly breakdown</p>
                       </div>
                     </div>
-                    <div style="color: ${COLORS.primary.rgb};" class="flex items-center text-xs font-black uppercase tracking-wider opacity-80 group-hover:opacity-100 transition-opacity">
+                    <div style="color: ${getColorValue(COLORS.primary)};" class="flex items-center text-xs font-black uppercase tracking-wider opacity-80 group-hover:opacity-100 transition-opacity">
                       <span>View Reports</span>
                       <span class="ml-2 group-hover:translate-x-1 transition-transform">${rightArrowSvg}</span>
                     </div>
