@@ -173,13 +173,11 @@ async function createIndexHtml(finalContributions = {}) {
       <main class="grow w-full">
         <header class="pt-24 pb-20 px-6 border-b" style="border-color: ${COLORS.border.light};">
           <div class="max-w-4xl mx-auto text-center">
-            <h1 class="text-5xl md:text-7xl font-extrabold mb-2 pt-8" style="color: ${COLORS.primary.rgb};">
+            <h1 class="text-5xl md:text-7xl font-extrabold mb-8 pt-8" style="color: ${COLORS.primary.rgb};">
               Open Source Portfolio
             </h1>
     
-            <h2 class="block text-4xl md:text-5xl font-bold opacity-80 mb-10" style="color: ${COLORS.primary[75]};">
-              @${GITHUB_USERNAME}
-            </h2>
+            <h2 class="block text-4xl md:text-5xl font-bold opacity-80 mb-8" style="color: ${COLORS.primary[75]}";>@${GITHUB_USERNAME}</h2>
 
             <p class="text-xl md:text-2xl text-gray-600 max-w-2xl mx-auto leading-relaxed font-medium">
               A comprehensive visualization of open source contributions, from high-level impact to granular quarterly details.
@@ -236,10 +234,10 @@ async function createIndexHtml(finalContributions = {}) {
 
                       return `
                     <div class="flex-1 flex flex-col justify-center px-8 py-4 border-b border-slate-100 hover:bg-slate-50 transition-colors last:border-0 relative">
-                      <div class="flex justify-between items-end mb-2">
-                        <span ${labelStyle} class="text-lg">${label}</span>
+                      <div class="flex justify-between items-start mb-2">
+                        <span ${labelStyle} class="text-lg leading-tight mt-1">${label}</span>
                         <div class="flex flex-col sm:flex-row items-end sm:items-baseline">
-                          <span style="color: ${COLORS.primary.rgb};" class="font-bold ${isHighest ? 'text-2xl sm:text-3xl' : 'text-xl sm:text-2xl'}">${count}</span>
+                          <span style="color: ${COLORS.primary.rgb};" class="font-bold ${isHighest ? 'text-2xl sm:text-3xl' : 'text-xl sm:text-2xl'} leading-none">${count}</span>
                           <span class="text-xs sm:text-sm text-slate-500 ml-0 sm:ml-1 font-mono font-bold">${s.pctStr}</span>
                         </div>
                       </div>
