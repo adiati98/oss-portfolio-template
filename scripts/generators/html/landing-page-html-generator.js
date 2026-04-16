@@ -14,6 +14,7 @@ const {
   INFO_ICON_SVG,
 } = require('../../config/constants');
 const { getIndexStyleCss } = require('../css/style-generator');
+const { getColorValue } = require('../../utils/color-helpers');
 
 const htmlBaseDir = path.join(BASE_DIR, 'html-generated');
 const HTML_OUTPUT_PATH = path.join(htmlBaseDir, 'index.html');

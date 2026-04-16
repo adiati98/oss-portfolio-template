@@ -23,22 +23,8 @@ const {
   FAVICON_SVG_ENCODED,
   COLORS,
 } = require('../../config/constants');
-
-/**
- * Sanitizes a string for safe use in HTML attributes (e.g., prevents double quotes from breaking HTML).
- * @param {string} str - The string to sanitize.
- * @returns {string} The sanitized string.
- */
-function sanitizeAttribute(str) {
-  if (typeof str !== 'string') return str;
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-    .replace(/`/g, '&#96;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
+const { getColorValue } = require('../../utils/color-helpers');
+const { sanitizeAttribute } = require('../../utils/html-helpers');
 
 /**
  * Generates and writes individual HTML report files for each quarter's contributions.
@@ -159,9 +145,9 @@ async function writeHtmlFiles(groupedContributions) {
     if (previousReport) {
       const prevPath = getReportPath(previousReport);
       previousButton = dedent`
-        <a href="${prevPath}" class="${baseClasses} bg-white nav-report-button text-left" style="color: ${COLORS.primary.rgb};">
+        <a href="${prevPath}" class="${baseClasses} bg-white nav-report-button text-left" style="color: ${getColorValue(COLORS.primary)};">
           <span class="text-[10px] sm:text-xs font-medium text-gray-500">Previous</span>
-          <span class="flex items-center space-x-1 font-bold text-sm sm:text-lg break-words whitespace-normal" style="color: ${COLORS.primary.rgb};">
+          <span class="flex items-center space-x-1 font-bold text-sm sm:text-lg break-words whitespace-normal" style="color: ${getColorValue(COLORS.primary)};">
             ${LEFT_ARROW_SVG}
             <span class="whitespace-normal min-w-0">${previousReport.fullQuarterName}</span>
           </span>
@@ -176,9 +162,9 @@ async function writeHtmlFiles(groupedContributions) {
     if (nextReport) {
       const nextPath = getReportPath(nextReport);
       nextButton = dedent`
-        <a href="${nextPath}" class="${baseClasses} bg-white nav-report-button text-right" style="color: ${COLORS.primary.rgb};">
+        <a href="${nextPath}" class="${baseClasses} bg-white nav-report-button text-right" style="color: ${getColorValue(COLORS.primary)};">
           <span class="text-[10px] sm:text-xs font-medium text-gray-500">Next</span>
-          <span class="flex items-center space-x-1 justify-end font-bold text-sm sm:text-lg break-words whitespace-normal" style="color: ${COLORS.primary.rgb};">
+          <span class="flex items-center space-x-1 justify-end font-bold text-sm sm:text-lg break-words whitespace-normal" style="color: ${getColorValue(COLORS.primary)};">
             <span class="whitespace-normal min-w-0">${nextReport.fullQuarterName}</span>
             ${RIGHT_ARROW_SVG}
           </span>
@@ -344,18 +330,18 @@ ${navHtmlForReports}
     <div class="px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-24 py-6 sm:py-10">
       <div class="max-w-[120ch] mx-auto">
         <header style="border-bottom-color: ${COLORS.primary[15]};" class="text-center mt-16 mb-12 pb-4 border-b-2">
-          <h1 style="color: ${COLORS.primary.rgb};" class="text-4xl sm:text-5xl font-extrabold mb-2 pt-8">${quarter} ${year}</h1>
+          <h1 style="color: ${getColorValue(COLORS.primary)};" class="text-4xl sm:text-5xl font-extrabold mb-2 pt-8">${quarter} ${year}</h1>
           <p class="text-lg text-gray-500 mt-2">Open Source Contributions Report</p>
         </header>
 
         <section class="mb-8">
-          <h2 style="border-left-color: ${COLORS.primary.rgb};" class="text-3xl font-semibold text-gray-800 mb-12 border-l-4 pl-3">📊 Quarterly Statistics</h2>
+          <h2 style="border-left-color: ${getColorValue(COLORS.primary)};" class="text-3xl font-semibold text-gray-800 mb-12 border-l-4 pl-3">📊 Quarterly Statistics</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div style="background-color: ${COLORS.primary.rgb};" class="text-white p-6 rounded-xl shadow-lg flex flex-col items-center justify-center">
+          <div style="background-color: ${getColorValue(COLORS.primary)};" class="text-white p-6 rounded-xl shadow-lg flex flex-col items-center justify-center">
             <p class="text-4xl font-extrabold">${totalContributions}</p>
             <p class="text-lg mt-2 font-medium">Total Contributions</p>
           </div>
-          <div style="background-color: ${COLORS.primary.rgb};" class="text-white p-6 rounded-xl shadow-lg flex flex-col items-center justify-center">
+          <div style="background-color: ${getColorValue(COLORS.primary)};" class="text-white p-6 rounded-xl shadow-lg flex flex-col items-center justify-center">
             <p class="text-4xl font-extrabold">${totalRepos}</p>
             <p class="text-lg mt-2 font-medium">Total Repositories</p>
           </div>
@@ -445,7 +431,7 @@ ${navHtmlForReports}
 
       // Details tag is used for collapsible sections.
       htmlContent += `<details id="${sectionInfo.id}" class="border border-gray-200 rounded-xl p-4 shadow-sm">\n`;
-      htmlContent += ` <summary style="color: ${COLORS.primary.rgb};" class="text-xl font-bold cursor-pointer outline-none">\n`;
+      htmlContent += ` <summary style="color: ${getColorValue(COLORS.primary)};" class="text-xl font-bold cursor-pointer outline-none">\n`;
       htmlContent += `  <div class="inline-flex items-center flex-nowrap gap-2 ml-3" style="vertical-align: middle;">\n`;
       htmlContent += `    <span class="w-6 h-6 flex items-center shrink-0">${sectionInfo.icon}</span>\n`;
       htmlContent += `    <span class="text-xl font-bold whitespace-nowrap">${sectionInfo.title} (${items ? items.length : 0})</span>\n`;
@@ -464,7 +450,7 @@ ${navHtmlForReports}
           <div class="flex flex-wrap gap-2 items-center mb-4 mt-2 px-1">
             
             <div class="icon-input-container grow">
-              <div class="input-icon" style="color: ${COLORS.primary.rgb};">
+              <div class="input-icon" style="color: ${getColorValue(COLORS.primary)};">
                 ${SEARCH_SVG}
               </div>
               
@@ -475,8 +461,8 @@ ${navHtmlForReports}
                 aria-label="${accessibleLabel}"
                 class="search-input w-full border rounded-md 
                 px-3 py-2 text-sm focus:outline-none focus:ring-1 transition"
-                style="border-color: ${COLORS.primary.rgb}; 
-                focus:border-color: ${COLORS.primary[15]};focus:ring-color: ${COLORS.primary[25]};"
+                style="border-color: ${getColorValue(COLORS.primary)}; 
+                focus:border-color: ${getColorValue(COLORS.primary[15])};focus:ring-color: ${getColorValue(COLORS.primary[25])};"
               />
             </div>
 
@@ -506,7 +492,7 @@ ${navHtmlForReports}
             : `<span class="th-content">${sectionInfo.headers[i]} <span class="sort-icon ml-1">↕</span></span>`;
           const cursorStyle = isStaticColumn ? 'cursor: default;' : 'cursor: pointer;';
 
-          tableContent += `    <th ${thAttributes} class="py-3 px-4" style="color: ${COLORS.primary.rgb}; ${cursorStyle}">
+          tableContent += `    <th ${thAttributes} class="py-3 px-4" style="color: ${getColorValue(COLORS.primary)}; ${cursorStyle}">
               ${headerContent}
           </th>\n`;
         }
