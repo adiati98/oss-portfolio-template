@@ -34,9 +34,11 @@ jobs:
         run: npm ci
 
       - name: Conditionally run full sync or daily update
+        env:
+          SYNC_MODE: ${{ github.event.inputs.sync_mode }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Use the input signal sent from the main branch trigger
-          if [ "${{ github.event.inputs.sync_mode }}" = "full" ]; then
+          if [ "$SYNC_MODE" = "full" ]; then
             echo "Security Check: Full sync requested. Purging cache..."
             rm -f data/all-contributions.json
             rm -f data/commit-cache.json
@@ -46,14 +48,14 @@ jobs:
             echo "Running standard daily incremental update..."
             node scripts/src/main.js
           fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Format generated files
         run: npm run format
         
       - name: Commit and push changes
         id: commit
+        env:
+          SYNC_MODE: ${{ github.event.inputs.sync_mode }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -61,7 +63,7 @@ jobs:
           git add contributions/markdown-generated/ contributions/html-generated/ data/
           
           if ! git diff --staged --quiet; then
-            if [ "${{ github.event.inputs.sync_mode }}" = "full" ]; then
+            if [ "$SYNC_MODE" = "full" ]; then
                 git commit -m "docs: Monthly full sync [skip ci]"
             else
                 git commit -m "docs: Daily contributions update [skip ci]"
@@ -75,7 +77,7 @@ jobs:
 
       - name: Trigger Netlify Deployment
         if: steps.commit.outputs.pushed == 'true'
-        run: |
-          curl -s -X POST -d {} ${NETLIFY_BUILD_HOOK} -o /dev/null
         env:
           NETLIFY_BUILD_HOOK: ${{ secrets.NETLIFY_BUILD_HOOK }}
+        run: |
+          curl -s -X POST -d {} "$NETLIFY_BUILD_HOOK" -o /dev/null
