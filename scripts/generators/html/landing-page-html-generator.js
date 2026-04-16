@@ -200,16 +200,16 @@ async function createIndexHtml(finalContributions = {}) {
                   <div class="relative z-10 h-px bg-white/20 my-8"></div>
                   <div class="relative z-10 grid grid-cols-2 gap-4">
                     <div class="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
-                      <div class="h-8 flex items-end"><p class="text-2xl sm:text-3xl font-black leading-none">${totalUniqueRepos}</p></div>
+                      <div class="h-8 flex items-end"><p class="text-3xl sm:text-4xl font-black leading-none tracking-tighter">${totalUniqueRepos}</p></div>
                       <p class="text-xs uppercase tracking-widest text-white opacity-80 leading-tight mt-2 font-bold">Impacted Repos</p>
                     </div>
                     <div class="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
-                      <div class="h-8 flex items-end"><p class="text-2xl sm:text-3xl font-black leading-none">${yearlyAverage}</p></div>
+                      <div class="h-8 flex items-end"><p class="text-3xl sm:text-4xl font-black leading-none tracking-tighter">${yearlyAverage}</p></div>
                       <p class="text-xs uppercase tracking-widest text-white opacity-80 leading-tight mt-2 font-bold">Yearly Average</p>
                     </div>
                     <div class="bg-white/10 rounded-xl p-4 col-span-2 backdrop-blur-sm flex justify-between items-center">
                       <span class="text-xs uppercase tracking-widest text-white font-bold">Active Since</span>
-                      <span class="text-xl font-black font-mono tracking-tighter">${earliestYear}</span>
+                      <span class="text-2xl font-black font-mono tracking-tighter">${earliestYear}</span>
                     </div>
                   </div>
                 </div>
@@ -229,16 +229,20 @@ async function createIndexHtml(finalContributions = {}) {
                       const isHighest = grandTotal > 0 && count === maxCount;
                       const barOpacity = isHighest ? 'opacity-100' : 'opacity-60';
 
+                      const rowBg = isHighest
+                        ? `style="background-color: ${getColorValue(COLORS.primary[5])};"`
+                        : '';
+
                       const labelStyle = isHighest
                         ? `style="color: ${getColorValue(COLORS.primary)}; font-weight: 900;"`
                         : 'class="text-slate-800 font-bold"';
 
                       return `
-                    <div class="flex-1 flex flex-col justify-center px-8 py-4 border-b border-slate-100 hover:bg-slate-50 transition-colors last:border-0 relative">
+                    <div ${rowBg} class="flex-1 flex flex-col justify-center px-8 py-4 border-b border-slate-100 hover:bg-slate-50 transition-colors last:border-0 relative">
                       <div class="flex justify-between items-start mb-2">
                         <span ${labelStyle} class="text-lg leading-tight mt-1">${label}</span>
                         <div class="flex flex-col sm:flex-row items-end sm:items-baseline">
-                          <span style="color: ${getColorValue(COLORS.primary)};" class="font-bold ${isHighest ? 'text-2xl sm:text-3xl' : 'text-xl sm:text-2xl'} leading-none">${count}</span>
+                          <span style="color: ${getColorValue(COLORS.primary)};" class="font-black tracking-tighter ${isHighest ? 'text-3xl sm:text-4xl' : 'text-2xl sm:text-3xl'} leading-none">${count}</span>
                           <span class="text-xs sm:text-sm text-slate-600 ml-0 sm:ml-1 font-mono font-bold">${s.pctStr}</span>
                         </div>
                       </div>
