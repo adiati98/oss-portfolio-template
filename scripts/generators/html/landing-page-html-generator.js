@@ -136,17 +136,18 @@ async function createIndexHtml(finalContributions = {}) {
             const isTop = idx === 0;
             const nameClass = isTop ? 'text-base font-black' : 'text-sm font-bold';
             const [owner, name] = repo.includes('/') ? repo.split('/') : ['', repo];
+            const repoUrl = `https://github.com/${repo}`;
 
             return `
         <div class="flex flex-col sm:flex-row sm:items-start justify-between py-4 border-b border-slate-100 last:border-0 gap-3 sm:gap-4">
           <div class="flex flex-col min-w-0">
-            ${owner ? `<span class="text-xs uppercase tracking-[0.15em] text-slate-400 font-black leading-none mb-1.5 block">${owner}</span>` : ''}
-            <a href="https://github.com/${repo}" target="_blank" rel="noopener noreferrer" class="${nameClass} break-all hover:underline underline-offset-4" style="color: ${getColorValue(COLORS.primary)};">
+            ${owner ? `<span class="text-xs uppercase tracking-[0.15em] text-slate-500 font-black leading-none mb-1.5 block">${owner}</span>` : ''}
+            <a href="${repoUrl}" target="_blank" rel="noopener noreferrer" class="${nameClass} break-all hover:underline underline-offset-4" style="color: ${getColorValue(COLORS.primary)};">
               ${name}
             </a>
           </div>
-          <div class="shrink-0 mt-1 sm:mt-0">
-            <span class="text-xs font-black text-slate-500 whitespace-nowrap px-2 py-1 bg-slate-50 rounded-md border border-slate-200">
+          <div class="shrink-0 mt-1 sm:mt-0 sm:self-center">
+            <span class="text-xs font-black text-slate-600 whitespace-nowrap px-2 py-1 bg-slate-50 rounded-md border border-slate-200">
               ${count} contributions
             </span>
           </div>
@@ -173,19 +174,19 @@ async function createIndexHtml(finalContributions = {}) {
       <main class="grow w-full">
         <header class="pt-24 pb-20 px-6 border-b" style="border-color: ${getColorValue(COLORS.border.light)};">
           <div class="max-w-4xl mx-auto text-center">
-            <h1 class="text-5xl md:text-7xl font-extrabold mb-8 pt-8" style="color: ${getColorValue(COLORS.primary)};">
+            <h1 class="text-5xl md:text-7xl font-extrabold mb-8 mt-12" style="color: ${getColorValue(COLORS.primary)};">
               Open Source Portfolio
             </h1>
     
             <h2 class="block text-4xl md:text-5xl font-bold opacity-80 mb-8" style="color: ${getColorValue(COLORS.primary[75])}";>@${GITHUB_USERNAME}</h2>
 
-            <p class="text-xl md:text-2xl text-gray-600 max-w-2xl mx-auto leading-relaxed font-medium">
+            <p class="text-xl md:text-2xl leading-relaxed max-w-2xl mx-auto" style="color: ${getColorValue(COLORS.text.secondary)};">
               A comprehensive visualization of open source contributions, from high-level impact to granular quarterly details.
             </p>
           </div>
         </header>
 
-        <div class="px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-24 py-6 sm:py-10">
+        <div class="px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-24 py-10 sm:py-14">
           <div class="max-w-[120ch] mx-auto">
 
             <section>
@@ -193,22 +194,22 @@ async function createIndexHtml(finalContributions = {}) {
                 <div style="background-color: ${getColorValue(COLORS.primary)};" class="relative overflow-hidden text-white p-6 sm:p-10 rounded-2xl shadow-xl flex flex-col justify-between border-t-4 border-white/20">
                   <div class="absolute right-0 -top-2 opacity-10 rotate-20 w-48 h-48 pointer-events-none">${PULL_REQUEST_LARGE_SVG}</div>
                   <div class="relative z-10 space-y-2">
-                    <p class="text-sm uppercase tracking-widest opacity-80 font-bold">Total Impact</p>
+                    <p class="text-sm uppercase tracking-widest opacity-80">Total Impact</p>
                     <p class="text-7xl font-black tracking-tight">${grandTotal}</p>
-                    <p class="text-lg opacity-100 font-bold">Lifetime Contributions on GitHub</p>
+                    <p class="text-lg opacity-90 font-semibold">Lifetime Contributions on GitHub</p>
                   </div>
                   <div class="relative z-10 h-px bg-white/20 my-8"></div>
                   <div class="relative z-10 grid grid-cols-2 gap-4">
                     <div class="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
                       <div class="h-8 flex items-end"><p class="text-3xl sm:text-4xl font-black leading-none tracking-tighter">${totalUniqueRepos}</p></div>
-                      <p class="text-xs uppercase tracking-widest text-white opacity-80 leading-tight mt-2 font-bold">Impacted Repos</p>
+                      <p class="text-xs uppercase tracking-widest text-white opacity-80 leading-tight mt-2">Impacted Repos</p>
                     </div>
                     <div class="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
                       <div class="h-8 flex items-end"><p class="text-3xl sm:text-4xl font-black leading-none tracking-tighter">${yearlyAverage}</p></div>
-                      <p class="text-xs uppercase tracking-widest text-white opacity-80 leading-tight mt-2 font-bold">Yearly Average</p>
+                      <p class="text-xs uppercase tracking-widest text-white opacity-80 leading-tight mt-2">Yearly Average</p>
                     </div>
                     <div class="bg-white/10 rounded-xl p-4 col-span-2 backdrop-blur-sm flex justify-between items-center">
-                      <span class="text-xs uppercase tracking-widest text-white font-bold">Active Since</span>
+                      <span class="text-xs uppercase tracking-widest text-white">Active Since</span>
                       <span class="text-2xl font-black font-mono tracking-tighter">${earliestYear}</span>
                     </div>
                   </div>
@@ -229,26 +230,36 @@ async function createIndexHtml(finalContributions = {}) {
                       const isHighest = grandTotal > 0 && count === maxCount;
                       const barOpacity = isHighest ? 'opacity-100' : 'opacity-60';
 
-                      const rowBg = isHighest
-                        ? `style="background-color: ${getColorValue(COLORS.primary[5])};"`
+                      const rowStyle = isHighest
+                        ? `style="background-color: ${getColorValue(COLORS.primary[10] || '#f5f3ff')};"`
                         : '';
 
-                      const labelStyle = isHighest
-                        ? `style="color: ${getColorValue(COLORS.primary)}; font-weight: 900;"`
-                        : 'class="text-slate-800 font-bold"';
+                      const labelClass = isHighest
+                        ? 'text-lg sm:text-xl font-black self-start tracking-tighter'
+                        : 'text-slate-800 font-bold text-md-lg sm:text-lg self-start tracking-tighter';
+
+                      const labelInlineStyle = isHighest
+                        ? `style="color: ${getColorValue(COLORS.primary)};"`
+                        : '';
+
+                      const trackClass = isHighest ? 'bg-white' : 'bg-slate-100';
 
                       return `
-                    <div ${rowBg} class="flex-1 flex flex-col justify-center px-8 py-4 border-b border-slate-100 hover:bg-slate-50 transition-colors last:border-0 relative">
-                      <div class="flex justify-between items-start mb-2">
-                        <span ${labelStyle} class="text-lg leading-tight mt-1">${label}</span>
+                    <div ${rowStyle} class="flex-1 flex flex-col justify-center px-8 py-4 border-b border-slate-100 hover:opacity-95 transition-all last:border-0 relative">
+                      <div class="flex justify-between items-center mb-2">
+                        <span class="${labelClass}" ${labelInlineStyle}>${label}</span>
                         <div class="flex flex-col sm:flex-row items-end sm:items-baseline">
-                          <span style="color: ${getColorValue(COLORS.primary)};" class="font-black tracking-tighter ${isHighest ? 'text-3xl sm:text-4xl' : 'text-2xl sm:text-3xl'} leading-none">${count}</span>
-                          <span class="text-xs sm:text-sm text-slate-600 ml-0 sm:ml-1 font-mono font-bold">${s.pctStr}</span>
+                          <span style="color: ${getColorValue(COLORS.primary)};" class="tracking-tighter ${
+                            isHighest
+                              ? 'font-black text-3xl sm:text-4xl'
+                              : 'font-bold text-2xl sm:text-3xl'
+                          } leading-none">${count}</span>
+                          <span class="text-xs sm:text-sm text-slate-600 mt-1 sm:mt-0 ml-0 sm:ml-2 font-mono font-semibold">${s.pctStr}</span>
                         </div>
                       </div>
-                      <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden flex">
+                      <div class="w-full ${trackClass} rounded-full h-3 overflow-hidden flex">
                         <div style="width: ${s.pct}%; max-width: ${s.pct}%; background-color: ${getColorValue(COLORS.primary)}; ${s.pct === 0 ? 'display: none;' : ''}" 
-                             class="progress-bar h-3 rounded-full ${barOpacity} transition-all duration-300">
+                             class="progress-bar h-3 rounded-full ${isHighest ? 'opacity-100' : 'opacity-60'} transition-all duration-300">
                         </div>
                       </div>
                     </div>`;
