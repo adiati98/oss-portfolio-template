@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-04-19
+
+### Changed
+
+- **Node.js Requirement**: Updated the minimum required Node.js version to `^22.0.0` in `package.json` and synchronized GitHub Actions workflows to ensure environment consistency.
+- **Contribution-centric landing page**: Promoted the comprehensive contribution visualization to the root `index.html`.
+- **Breaking Change (URL Restructuring)**: Moved the detailed contribution view from `all-contributions.html` to the primary landing page (`index.html`). Users hosting this portfolio should update any external links accordingly, if necessary.
+- **UI and accessibility improvements**: Refined the layout for better scannability and increased font sizes for small text elements to improve overall readability.
+- **Logic integration**: Consolidated the contribution generation logic into the main index generator.
+- **Metadata centralization**: Moved persona categories and definitions to a dedicated metadata folder to decouple data from generation logic.
+
+### Added
+
+- **Glossary page**: Created a standalone Glossary page that provides a comprehensive explanation of terms and categories used to track open source impact. It details how contribution data is collected, sorted, and calculated.
+
+### Removed
+
+- **Redundant generator**: Removed `all-contributions-html-generator.js` as its functionality is now handled by the main index generator.
+
 ## [1.1.3] - 2026-04-16
 
 ### Added

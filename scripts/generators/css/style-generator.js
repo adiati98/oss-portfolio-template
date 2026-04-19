@@ -94,52 +94,26 @@ function getCommonBaseCss() {
 // --- 2. FUNCTIONS FOR EACH HTML GENERATOR ---
 
 /**
- * Generates the CSS block for the <style> tag in the All-Time Contributions and Landing Page head.
- * @returns {string} The CSS string.
+ * Generates the CSS block for the Landing Page head.
  */
 function getIndexStyleCss() {
   return dedent`
     ${getCommonBaseCss()}
-    /* Feature card specific overrides at landing page*/
-    .feature-card:hover { 
-      border-color: ${COLORS.primary.rgb} !important; 
-      box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1); 
-    }
-    .feature-card svg { 
-      width: 1.75rem; 
-      height: 1.75rem; 
-      display: block; 
+
+    /* Custom font size between md and lg */
+    .text-md-lg {
+      font-size: 1.0625rem;
+      line-height: 1.625rem;
     }
 
-    /* Base styles for the link */
-    a.browse-reports {
-      color: ${COLORS.text.secondary};
-      text-decoration: none;
-    }
-
-    /* Hover state */
-    a.browse-reports:hover {
-      color: ${COLORS.text.primary};
+    /* Hover state for links using the secondary text color */
+    .hover-underline-primary:hover {
       text-decoration: underline;
+      text-underline-offset: 4px;
       text-decoration-color: ${COLORS.primary.rgb};
-      transition: color 0.2s ease-in-out, text-decoration-color 0.2s ease-in-out;
     }
 
-    .index-report-link {
-      border: 1px solid ${COLORS.border.light} !important;
-      transition: border-color 0.15s ease-in-out, box-shadow 0.2s;
-    }
-    .index-report-link:hover {
-      border-color: ${COLORS.primary.rgb} !important;
-    }
-
-    .index-report-link svg { 
-      transition: transform 0.2s; 
-    }
-    .index-report-link:hover svg { 
-      transform: translateX(4px); 
-    }
-
+    /* Animation for the Contribution Bars */
     @keyframes loadBar {
       from { width: 0; }
     }
@@ -150,8 +124,7 @@ function getIndexStyleCss() {
 }
 
 /**
- * Generates the CSS block for the <style> tag in the Quarterly Reports List (reports.html) HTML head.
- * @returns {string} The CSS string.
+ * Generates the CSS block for the Quarterly Reports List (reports.html).
  */
 function getReportsListStyleCss() {
   return dedent`
@@ -214,8 +187,7 @@ function getReportsListStyleCss() {
 }
 
 /**
- * Generates the CSS block for the <style> tag in the Quarterly Report HTML head.
- * @returns {string} The CSS string.
+ * Generates the CSS block for the Quarterly Report HTML head.
  */
 function getReportStyleCss() {
   return dedent`
@@ -235,7 +207,6 @@ function getReportStyleCss() {
       outline-offset: 2px;
     }
 
-    /* Keeps icon and text aligned horizontally inside summary */
     summary .inline-flex {
       display: inline-flex;
       align-items: center;
@@ -304,7 +275,6 @@ function getReportStyleCss() {
     .report-table tbody tr.bg-white { background-color: #ffffff; }
     .report-table tbody tr.bg-gray-50 { background-color: #f9fafb; }
 
-    /* Table Header Sorting Alignment */
     .th-content {
       display: inline-flex;
       align-items: center;
@@ -320,7 +290,6 @@ function getReportStyleCss() {
       line-height: 1;
     }
 
-    /* Highlight the arrow for standard and custom status sorts */
     th.sort-asc .sort-icon,
     th.sort-desc .sort-icon,
     th.sort-custom1 .sort-icon,
@@ -330,7 +299,6 @@ function getReportStyleCss() {
       font-weight: bold;
     }
 
-    /* Search Bar Icon Positioning */
     .icon-input-container {
       position: relative;
     }
@@ -345,7 +313,6 @@ function getReportStyleCss() {
       pointer-events: none;
     }
 
-    /* Mobile Screen Optimization (320px screens) */
     @media (max-width: 400px) {
       summary .text-xl {
         font-size: 1.1rem !important;
@@ -362,8 +329,57 @@ function getReportStyleCss() {
   `;
 }
 
+/**
+ * Generates the CSS block for the Glossary page (glossary.html).
+ */
+function getGlossaryStyleCss() {
+  return dedent`
+    ${getCommonBaseCss()}
+    
+    .glossary-content {
+      line-height: 1.8;
+    }
+
+    /* The Block Code Look */
+    .glossary-code-block {
+      display: block;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* Target the text inside to ensure monospace inheritance */
+    .glossary-code-block .text-sm {
+      font-family: inherit;
+    }
+
+    /* Bold text: Clean, high-contrast, no background color */
+    .glossary-content strong {
+      color: #3730a3; /* text-indigo-800 */
+      font-weight: 900;
+      background-color: transparent !important;
+      padding: 0;
+    }
+
+    /* Highlight the section when navigating via URL hash (#) */
+    :target {
+      background-color: ${COLORS.primary[5]};
+      border-radius: 1rem;
+      transition: background-color 0.5s ease;
+      padding: 1rem;
+      margin: -1rem;
+      scroll-margin-top: 100px;
+    }
+
+    :target h3 {
+      color: ${COLORS.primary.rgb} !important;
+    }
+  `;
+}
+
 module.exports = {
   getReportStyleCss,
   getIndexStyleCss,
   getReportsListStyleCss,
+  getGlossaryStyleCss,
 };

@@ -2,7 +2,7 @@ const fs = require('fs/promises');
 const path = require('path');
 const prettier = require('prettier');
 const { dedent } = require('../../utils/dedent');
-const { BASE_DIR } = require('../../config/config');
+const { GITHUB_USERNAME, BASE_DIR } = require('../../config/config');
 const {
   formatDate,
   calculatePeriodInDays,
@@ -68,24 +68,24 @@ async function writeHtmlFiles(groupedContributions) {
    */
   function getStatusBadgeHtml(status) {
     const cleanedStatus = status.toUpperCase().trim();
-    let bgColor = COLORS.status.gray.bg;
-    let textColor = COLORS.status.gray.text;
+    let bgColor = getColorValue(COLORS.status.gray.bg);
+    let textColor = getColorValue(COLORS.status.gray.text);
     let fontWeight = 'font-medium';
 
     switch (cleanedStatus) {
       case 'OPEN':
-        bgColor = COLORS.status.green.bg;
-        textColor = COLORS.status.green.text;
+        bgColor = getColorValue(COLORS.status.green.bg);
+        textColor = getColorValue(COLORS.status.green.text);
         fontWeight = 'font-semibold';
         break;
       case 'MERGED':
-        bgColor = COLORS.status.purple.bg;
-        textColor = COLORS.status.purple.text;
+        bgColor = getColorValue(COLORS.status.purple.bg);
+        textColor = getColorValue(COLORS.status.purple.text);
         fontWeight = 'font-semibold';
         break;
       case 'CLOSED':
-        bgColor = COLORS.status.red.bg;
-        textColor = COLORS.status.red.text;
+        bgColor = getColorValue(COLORS.status.red.bg);
+        textColor = getColorValue(COLORS.status.red.text);
         fontWeight = 'font-semibold';
         break;
       default:
@@ -313,23 +313,23 @@ async function writeHtmlFiles(groupedContributions) {
     // Begin HTML structure for the report page.
     let htmlContent = dedent`
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${quarter} ${year} Contributions Report</title>
+  <title>${quarter} ${year} Report | ${GITHUB_USERNAME} OSS Portfolio</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,${FAVICON_SVG_ENCODED}">
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <style>
     ${dynamicCss}
   </style>
 </head>
-<body>
+<body class="bg-white antialiased flex flex-col h-full min-h-full">
 ${navHtmlForReports}
   <main class="grow w-full">
-    <div class="min-h-full px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-24 py-6 sm:py-10">
+    <div class="px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-24 py-6 sm:py-10">
       <div class="max-w-[120ch] mx-auto">
-        <header style="border-bottom-color: ${COLORS.primary[15]};" class="text-center mt-16 mb-12 pb-4 border-b-2">
+        <header style="border-bottom-color: ${getColorValue(COLORS.primary[15])};" class="text-center mt-16 mb-12 pb-4 border-b-2">
           <h1 style="color: ${getColorValue(COLORS.primary)};" class="text-4xl sm:text-5xl font-extrabold mb-2 pt-8">${quarter} ${year}</h1>
           <p class="text-lg text-gray-500 mt-2">Open Source Contributions Report</p>
         </header>
@@ -385,8 +385,8 @@ ${navHtmlForReports}
             ]
               .map(
                 (item) => `
-              <a href="#${item.id}" class="nav-contribution-button flex flex-col items-center p-3 bg-white border rounded-xl shadow-sm hover:shadow-lg transition text-center" style="color: ${COLORS.primary.rgb};">
-                <span class="text-2xl font-bold" style="color: ${COLORS.primary.rgb};">${item.count}</span>
+              <a href="#${item.id}" class="nav-contribution-button flex flex-col items-center p-3 bg-white border rounded-xl shadow-sm hover:shadow-lg transition text-center" style="color: ${getColorValue(COLORS.primary)};">
+                <span class="text-2xl font-bold" style="color: ${getColorValue(COLORS.primary)};">${item.count}</span>
                 <div class="flex items-center justify-center gap-1.5 text-gray-500 mt-1">
                   <span class="breakdown-icon-wrapper opacity-70">
                     ${item.icon}
