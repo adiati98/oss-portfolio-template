@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-05-16
+
+### Added
+
+- **Date fallback properties**: Implemented a sequential fallback priority chain (`item.date` || `item.createdAt` || `item.closedAt` || `item.updatedAt`) in the quarter grouping logic to prevent records from missing prematurely.
+
+### Changed
+
+- **Status rendering consolidation**: Refactored the `quarterly-reports-generator.js` pipeline to replace custom inline HTML string construction for Reviewed PRs, Co-Authored PRs, and Collaborations with unified utility formatter calls (`getPrStatusContent` and `getCollaborationStatusContent`).
+- **Deterministic dashboard highlights**: Aligned iterative mapping keys to use dictionary data keys and updated the conditional modifier to evaluate strictly against the active profile's key (`key === activePersonaKey`). This fixes competing highlights during exact mathematical ties and mirrors priority profile assignments cleanly.
+- **Markdown highlight synchronization**: Updated the Markdown generator logic to dynamically apply bold formatting (`**`) to labels, counts, and percentages inside the contribution distribution table rows to perfectly match the HTML dashboard behavior.
+- **Bot interaction logging**: Refactored evaluation pipelines to securely catalog bot interactions under collaborations if tracking metrics like `firstCommentDate` exist, rather than skipping them entirely.
+
+### Fixed
+
+- **Stale commit evaluation**: Added a validation check to compare commit author dates directly against `prCreatedAt`, ensuring historical commits originating from a base or upstream branch are not counted as active contributions.
+- **Pull request date metrics**: Updated the "Merged PRs" matrix to utilize `item.mergedAt || item.closedAt`, guaranteeing accurate review periods even when strict merge attributes are absent from raw payloads.
+- **Missing date warnings**: Introduced an explicit verification step and `console.warn` logging to capture structural anomalies prior to discarding entries with missing date references.
+
 # [2.1.0] - 2026-04-22
 
 ### Added
