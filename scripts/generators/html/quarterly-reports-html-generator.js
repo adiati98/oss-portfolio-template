@@ -68,24 +68,24 @@ async function writeHtmlFiles(groupedContributions) {
    */
   function getStatusBadgeHtml(status) {
     const cleanedStatus = status.toUpperCase().trim();
-    let bgColor = getColorValue(COLORS.status.gray.bg);
-    let textColor = getColorValue(COLORS.status.gray.text);
+    let bgColor = COLORS.status?.gray?.bg || '#f1f5f9';
+    let textColor = COLORS.status?.gray?.text || '#475569';
     let fontWeight = 'font-medium';
 
     switch (cleanedStatus) {
       case 'OPEN':
-        bgColor = getColorValue(COLORS.status.green.bg);
-        textColor = getColorValue(COLORS.status.green.text);
+        bgColor = COLORS.status?.green?.bg || '#dcfce7';
+        textColor = COLORS.status?.green?.text || '#166534';
         fontWeight = 'font-semibold';
         break;
       case 'MERGED':
-        bgColor = getColorValue(COLORS.status.purple.bg);
-        textColor = getColorValue(COLORS.status.purple.text);
+        bgColor = COLORS.status?.purple?.bg || '#f3e8ff';
+        textColor = COLORS.status?.purple?.text || '#6b21a8';
         fontWeight = 'font-semibold';
         break;
       case 'CLOSED':
-        bgColor = getColorValue(COLORS.status.red.bg);
-        textColor = getColorValue(COLORS.status.red.text);
+        bgColor = COLORS.status?.red?.bg || '#fee2e2';
+        textColor = COLORS.status?.red?.text || '#991b1b';
         fontWeight = 'font-semibold';
         break;
       default:
@@ -215,11 +215,11 @@ async function writeHtmlFiles(groupedContributions) {
 
     // Calculate repository statistics for the summary section.
     const allItems = [
-      ...data.pullRequests,
-      ...data.issues,
-      ...data.reviewedPrs,
-      ...data.coAuthoredPrs,
-      ...data.collaborations,
+      ...(data.pullRequests || []),
+      ...(data.issues || []),
+      ...(data.reviewedPrs || []),
+      ...(data.coAuthoredPrs || []),
+      ...(data.collaborations || []),
     ];
     const uniqueRepos = new Set(allItems.map((item) => item.repo));
     const totalRepos = uniqueRepos.size;
@@ -306,7 +306,7 @@ async function writeHtmlFiles(groupedContributions) {
         headers: ['No.', 'Project', 'Title', 'Created At', 'First Comment', 'Last Update / Status'],
         widths: ['5%', '25%', '30%', '12%', '12%', '16%'],
         colTypes: ['number', 'string', 'string', 'date', 'date', 'status'],
-        keys: ['repo', 'title', 'createdAt', 'date', 'date'],
+        keys: ['repo', 'title', 'createdAt', 'firstCommentedAt', 'updatedAt'],
       },
     };
 
@@ -329,7 +329,7 @@ ${navHtmlForReports}
   <main class="grow w-full">
     <div class="px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-24 py-6 sm:py-10">
       <div class="max-w-[120ch] mx-auto">
-        <header style="border-bottom-color: ${getColorValue(COLORS.primary[15])};" class="text-center mt-16 mb-12 pb-4 border-b-2">
+        <header style="border-bottom-color: ${COLORS.primary[15] || '#e2e8f0'};" class="text-center mt-16 mb-12 pb-4 border-b-2">
           <h1 style="color: ${getColorValue(COLORS.primary)};" class="text-4xl sm:text-5xl font-extrabold mb-2 pt-8">${quarter} ${year}</h1>
           <p class="text-lg text-gray-500 mt-2">Open Source Contributions Report</p>
         </header>
@@ -416,7 +416,7 @@ ${navHtmlForReports}
 
     // Generate HTML for each contribution section (table).
     for (const [section, sectionInfo] of Object.entries(sections)) {
-      let items = data[section]; // Get data for the current section.
+      let items = data[section] || []; // Get data for the current section.
 
       // Apply initial chronological sort to Reviewed PRs and Co-Authored PRs for display consistency.
       if (section === 'reviewedPrs' && items && items.length > 0) {
@@ -434,7 +434,7 @@ ${navHtmlForReports}
       htmlContent += ` <summary style="color: ${getColorValue(COLORS.primary)};" class="text-xl font-bold cursor-pointer outline-none">\n`;
       htmlContent += `  <div class="inline-flex items-center flex-nowrap gap-2 ml-3" style="vertical-align: middle;">\n`;
       htmlContent += `    <span class="w-6 h-6 flex items-center shrink-0">${sectionInfo.icon}</span>\n`;
-      htmlContent += `    <span class="text-xl font-bold whitespace-nowrap">${sectionInfo.title} (${items ? items.length : 0})</span>\n`;
+      htmlContent += `    <span class="text-xl font-bold whitespace-nowrap">${sectionInfo.title} (${items.length})</span>\n`;
       htmlContent += `  </div>\n`;
       htmlContent += ` </summary>\n`;
 
@@ -479,7 +479,7 @@ ${navHtmlForReports}
         let tableContent = `<div class="overflow-x-auto rounded-lg border border-gray-100 max-h-[70vh] overflow-y-auto">\n`;
         tableContent += ` <table class="report-table min-w-full divide-y divide-gray-200 bg-white">\n`;
         tableContent += `  <thead class="bg-white">\n`;
-        tableContent += `   <tr>\n`;
+        tableContent += `    <tr>\n`;
 
         // Generate table headers with sorting attributes (data-type).
         for (let i = 0; i < sectionInfo.headers.length; i++) {
@@ -492,11 +492,11 @@ ${navHtmlForReports}
             : `<span class="th-content">${sectionInfo.headers[i]} <span class="sort-icon ml-1">↕</span></span>`;
           const cursorStyle = isStaticColumn ? 'cursor: default;' : 'cursor: pointer;';
 
-          tableContent += `    <th ${thAttributes} class="py-3 px-4" style="color: ${getColorValue(COLORS.primary)}; ${cursorStyle}">
+          tableContent += `     <th ${thAttributes} class="py-3 px-4" style="color: ${getColorValue(COLORS.primary)}; ${cursorStyle}">
               ${headerContent}
           </th>\n`;
         }
-        tableContent += `   </tr>\n`;
+        tableContent += `    </tr>\n`;
         tableContent += `  </thead>\n`;
         tableContent += `  <tbody class="divide-y divide-gray-100">\n`;
 
@@ -507,29 +507,34 @@ ${navHtmlForReports}
           const safeTitle = sanitizeAttribute(item.title);
 
           // Row with data-href to enable click navigation.
-          tableContent += `   <tr class="${rowBg} table-row-hover" style="transition: background-color 0.15s ease-in-out;">\n`;
+          const rowClass = `${rowBg} table-row-hover`;
+          tableContent += `   <tr class="${rowClass}" style="transition: background-color 0.15s ease-in-out;">\n`;
 
           // No. column (not sortable).
-          tableContent += `    <td>${counter++}.</td>\n`;
+          tableContent += `     <td>${counter++}.</td>\n`;
 
           // Repo column (String type).
           const repoSpanHtml = `<span class="font-mono text-xs bg-gray-100 p-1 rounded">${item.repo}</span>`;
-          tableContent += `    <td data-value="${item.repo}" data-col-type="string">${repoSpanHtml}</td>\n`;
+          tableContent += `     <td data-value="${item.repo}" data-col-type="string">${repoSpanHtml}</td>\n`;
 
           // Title column (String type, contains hyperlink).
           const linkHtml = `<a href='${item.url}' target='_blank' class="text-blue-600 hover:text-blue-800 hover:underline">${item.title}</a>`;
-          tableContent += `    <td data-value="${safeTitle}" data-col-type="string">${linkHtml}</td>\n`;
+          tableContent += `     <td data-value="${safeTitle}" data-col-type="string">${linkHtml}</td>\n`;
 
           // Handle the remaining columns based on the contribution type.
           if (section === 'pullRequests') {
             const createdAt = formatDate(item.createdAt);
-            const mergedAt = formatDate(item.mergedAt);
-            const reviewPeriod = calculatePeriodInDays(item.createdAt, item.mergedAt);
-            const daysNum = reviewPeriod.replace(/[^0-9]/g, '') || 0; // extract number for sorting
+            // Use mergedAt if available, otherwise closedAt
+            const completedAtDate = item.mergedAt || item.closedAt;
+            const completedAtFormatted = formatDate(completedAtDate);
 
-            tableContent += `    <td data-value="${item.createdAt}" data-col-type="date">${createdAt}</td>\n`;
-            tableContent += `    <td data-value="${item.mergedAt}" data-col-type="date">${mergedAt}</td>\n`;
-            tableContent += `    <td data-value="${daysNum}" data-col-type="number">${reviewPeriod}</td>\n`;
+            // Calculate period using whatever end date we found
+            const reviewPeriod = calculatePeriodInDays(item.createdAt, completedAtDate);
+            const daysNum = reviewPeriod.replace(/[^0-9]/g, '') || 0;
+
+            tableContent += ` <td data-value="${item.createdAt}" data-col-type="date">${createdAt}</td>\n`;
+            tableContent += ` <td data-value="${completedAtDate || ''}" data-col-type="date">${completedAtFormatted}</td>\n`;
+            tableContent += ` <td data-value="${daysNum}" data-col-type="number">${reviewPeriod}</td>\n`;
           } else if (section === 'issues') {
             const createdAt = formatDate(item.date);
             const closedAt = formatDate(item.closedAt);
@@ -548,9 +553,9 @@ ${navHtmlForReports}
               sortValue = sortValue || '0';
             }
 
-            tableContent += `    <td data-value="${item.date}" data-col-type="date">${createdAt}</td>\n`;
-            tableContent += `    <td data-value="${item.closedAt}" data-col-type="date">${closedAt}</td>\n`;
-            tableContent += `    <td data-value="${sortValue}" data-col-type="number">${closingPeriodHtml}</td>\n`;
+            tableContent += `     <td data-value="${item.date}" data-col-type="date">${createdAt}</td>\n`;
+            tableContent += `     <td data-value="${item.closedAt}" data-col-type="date">${closedAt}</td>\n`;
+            tableContent += `     <td data-value="${sortValue}" data-col-type="number">${closingPeriodHtml}</td>\n`;
           } else if (section === 'reviewedPrs') {
             const createdAt = formatDate(item.createdAt);
             const myFirstReviewAt = formatDate(item.myFirstReviewDate);
@@ -562,10 +567,10 @@ ${navHtmlForReports}
 
             const statusObj = formatPrStatusWithBadge(getPrStatusContent(item));
 
-            tableContent += `    <td data-value="${item.createdAt}" data-col-type="date">${createdAt}</td>\n`;
-            tableContent += `    <td data-value="${item.myFirstReviewDate}" data-col-type="date">${myFirstReviewAt}</td>\n`;
-            tableContent += `    <td data-value="${daysNum}" data-col-type="number">${myFirstReviewPeriod}</td>\n`;
-            tableContent += `    <td data-value="${statusObj.statusText}" data-col-type="status">${statusObj.html}</td>\n`;
+            tableContent += `     <td data-value="${item.createdAt}" data-col-type="date">${createdAt}</td>\n`;
+            tableContent += `     <td data-value="${item.myFirstReviewDate}" data-col-type="date">${myFirstReviewAt}</td>\n`;
+            tableContent += `     <td data-value="${daysNum}" data-col-type="number">${myFirstReviewPeriod}</td>\n`;
+            tableContent += `     <td data-value="${statusObj.statusText}" data-col-type="status">${statusObj.html}</td>\n`;
           } else if (section === 'coAuthoredPrs') {
             const createdAt = formatDate(item.createdAt);
             const firstCommitAt = formatDate(item.firstCommitDate);
@@ -574,21 +579,22 @@ ${navHtmlForReports}
 
             const statusObj = formatPrStatusWithBadge(getPrStatusContent(item));
 
-            tableContent += `    <td data-value="${item.createdAt}" data-col-type="date">${createdAt}</td>\n`;
-            tableContent += `    <td data-value="${item.firstCommitDate}" data-col-type="date">${firstCommitAt}</td>\n`;
-            tableContent += `    <td data-value="${daysNum}" data-col-type="number">${firstCommitPeriod}</td>\n`;
-            tableContent += `    <td data-value="${statusObj.statusText}" data-col-type="status">${statusObj.html}</td>\n`;
+            tableContent += `     <td data-value="${item.createdAt}" data-col-type="date">${createdAt}</td>\n`;
+            tableContent += `     <td data-value="${item.firstCommitDate}" data-col-type="date">${firstCommitAt}</td>\n`;
+            tableContent += `     <td data-value="${daysNum}" data-col-type="number">${firstCommitPeriod}</td>\n`;
+            tableContent += `     <td data-value="${statusObj.statusText}" data-col-type="status">${statusObj.html}</td>\n`;
           } else if (section === 'collaborations') {
             const createdAt = formatDate(item.createdAt);
             const commentedAt = formatDate(item.firstCommentedAt);
             const statusObj = formatPrStatusWithBadge(getCollaborationStatusContent(item));
 
-            tableContent += `    <td data-value="${item.createdAt}" data-col-type="date">${createdAt}</td>\n`;
-            tableContent += `    <td data-value="${item.firstCommentedAt}" data-col-type="date">${commentedAt}</td>\n`;
-            tableContent += `    <td data-value="${statusObj.statusText}" data-col-type="status">${statusObj.html}</td>\n`;
+            tableContent += ` <td data-value="${item.createdAt}" data-col-type="date">${createdAt}</td>\n`;
+            tableContent += ` <td data-value="${item.firstCommentedAt || ''}" data-col-type="date">${commentedAt}</td>\n`;
+            // Using updatedAt for the status column's date value to ensure proper sorting
+            tableContent += ` <td data-value="${statusObj.statusText}" data-col-type="status">${statusObj.html}</td>\n`;
           }
 
-          tableContent += `   </tr>\n`;
+          tableContent += `    </tr>\n`;
         }
 
         tableContent += `  </tbody>\n`;

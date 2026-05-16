@@ -14,21 +14,28 @@ const MARKDOWN_GLOSSARY_FILENAME = 'glossary.md';
  * Determines persona based on metadata and counts.
  */
 function determinePersona(counts) {
-  const grandTotal = Object.values(counts).reduce((a, b) => a + b, 0);
-  if (grandTotal === 0) return DEFAULT_PERSONA;
+  const { prCount, issueCount, reviewedPrCount, coAuthoredPrCount, collaborationCount } = counts;
+
+  const grandTotal =
+    prCount + issueCount + reviewedPrCount + coAuthoredPrCount + collaborationCount;
+
+  if (grandTotal === 0) {
+    return DEFAULT_PERSONA;
+  }
 
   return PERSONA_CATEGORIES.reduce((prev, curr) => {
-    const currCount = counts[curr.key] || 0;
+    const currentCount = counts[curr.key] || 0;
     const prevCount = counts[prev.key] || 0;
 
-    if (currCount > prevCount) return curr;
-    if (currCount === prevCount && curr.priority < prev.priority) return curr;
+    if (currentCount > prevCount) return curr;
+    if (currentCount === prevCount && curr.priority < prev.priority) return curr;
+
     return prev;
   });
 }
 
 /**
- * Helper: Generates a Unicode progress bar
+ * Helper: Generates a Unicode progress bar string using Squares
  */
 function generateProgressBar(count, total, width) {
   const filledChar = '■';
@@ -52,19 +59,13 @@ async function createStatsReadme(finalContributions) {
   const issueCount = finalContributions.issues?.length || 0;
   const reviewedPrCount = finalContributions.reviewedPrs?.length || 0;
   const collaborationCount = finalContributions.collaborations?.length || 0;
-  const coAuthoredPrCount = (finalContributions.coAuthoredPrs || []).length;
+  const coAuthoredPrCount = Array.isArray(finalContributions.coAuthoredPrs)
+    ? finalContributions.coAuthoredPrs.length
+    : 0;
 
   const grandTotal =
     prCount + issueCount + reviewedPrCount + collaborationCount + coAuthoredPrCount;
-  const maxCount = Math.max(
-    prCount,
-    issueCount,
-    reviewedPrCount,
-    collaborationCount,
-    coAuthoredPrCount
-  );
 
-  // 2. Persona Logic
   const countsDict = {
     prCount,
     issueCount,
@@ -72,29 +73,44 @@ async function createStatsReadme(finalContributions) {
     coAuthoredPrCount,
     collaborationCount,
   };
-  const { title: personaTitle, desc: personaDesc } = determinePersona(countsDict);
+
+  // 2. Persona Logic
+  const chosenPersona = determinePersona(countsDict);
+  const { title: personaTitle, desc: personaDesc, key: activePersonaKey } = chosenPersona;
 
   const lowerDesc = personaDesc.charAt(0).toLowerCase() + personaDesc.slice(1);
-  const article = ['a', 'e', 'i', 'o', 'u'].includes(lowerDesc.charAt(0)) ? 'An' : 'A';
+  const firstLetter = lowerDesc.charAt(0);
+  const article = ['a', 'e', 'i', 'o', 'u'].includes(firstLetter) ? 'An' : 'A';
 
   // 3. Stats Prep
-  const getStats = (count) => {
+  const getStats = (count, key) => {
     const BAR_WIDTH = 30;
-    const pctVal = grandTotal === 0 ? 0 : (count / grandTotal) * 100;
-    const isMax = count === maxCount && count > 0;
+    if (grandTotal === 0)
+      return {
+        pct: '0.0%',
+        count: '0',
+        bar: generateProgressBar(0, 0, BAR_WIDTH),
+        isHighest: false,
+      };
+
+    const pctVal = (count / grandTotal) * 100;
+    const isHighest = grandTotal > 0 && key === activePersonaKey;
+    const pctStr = pctVal.toFixed(1) + '%';
+
     return {
-      pct: isMax ? `**${pctVal.toFixed(1)}%**` : `${pctVal.toFixed(1)}%`,
-      count: isMax ? `**${count}**` : count,
+      pct: isHighest ? `**${pctStr}**` : pctStr,
+      count: isHighest ? `**${count}**` : count,
       bar: generateProgressBar(count, grandTotal, BAR_WIDTH),
+      isHighest,
     };
   };
 
   const stats = {
-    prs: getStats(prCount),
-    issues: getStats(issueCount),
-    reviews: getStats(reviewedPrCount),
-    coauth: getStats(coAuthoredPrCount),
-    collab: getStats(collaborationCount),
+    prs: getStats(prCount, 'prCount'),
+    issues: getStats(issueCount, 'issueCount'),
+    reviews: getStats(reviewedPrCount, 'reviewedPrCount'),
+    coauth: getStats(coAuthoredPrCount, 'coAuthoredPrCount'),
+    collab: getStats(collaborationCount, 'collaborationCount'),
   };
 
   // 4. Aggregate Repository Activity
@@ -102,36 +118,43 @@ async function createStatsReadme(finalContributions) {
     ...(finalContributions.pullRequests || []),
     ...(finalContributions.issues || []),
     ...(finalContributions.reviewedPrs || []),
-    ...(finalContributions.coAuthoredPrs || []),
+    ...(Array.isArray(finalContributions.coAuthoredPrs) ? finalContributions.coAuthoredPrs : []),
     ...(finalContributions.collaborations || []),
   ];
 
   const totalUniqueRepos = new Set(allItems.map((item) => item.repo)).size;
-  const earliestYear =
-    allItems.length > 0
-      ? Math.min(...allItems.map((i) => new Date(i.date).getFullYear()))
-      : new Date().getFullYear();
 
-  const topThreeRepos = Object.entries(
-    allItems.reduce((acc, item) => {
-      acc[item.repo] = (acc[item.repo] || 0) + 1;
-      return acc;
-    }, {})
-  )
+  const repoActivity = allItems.reduce((acc, item) => {
+    acc[item.repo] = (acc[item.repo] || 0) + 1;
+    return acc;
+  }, {});
+
+  const topThreeRepos = Object.entries(repoActivity)
     .sort(([, a], [, b]) => b - a)
     .slice(0, 3);
 
   const topReposMarkdown =
     topThreeRepos.length > 0
       ? topThreeRepos
-          .map(
-            ([repo, count], idx) =>
-              `${idx + 1}. [**${repo}**](https://github.com/${repo}) (${count} contributions)`
-          )
+          .map(([repo, count], idx) => {
+            const rank = idx + 1;
+            return `${rank}. [**${repo}**](https://github.com/${repo}) (${count} contributions)`;
+          })
           .join('\n')
       : '_No activity recorded yet._';
 
-  // 5. Generate Quarterly Links (RESTORED LOGIC)
+  // 5. Dynamic year calculation
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const yearsActive = allItems
+    .map((item) => new Date(item.date).getFullYear())
+    .filter((year) => !isNaN(year) && year >= 2008);
+
+  const earliestYear = yearsActive.length > 0 ? Math.min(...yearsActive) : currentYear;
+  const yearsTracked = currentYear - earliestYear + 1;
+  const generatedAt = now.toLocaleString();
+
+  // 6. Generate Quarterly Links
   let reportLinksContent = '## 📂 Detailed Quarterly Reports\n\n';
   try {
     const files = await fs.readdir(markdownBaseDir);
@@ -160,36 +183,57 @@ async function createStatsReadme(finalContributions) {
     reportLinksContent += '_No detailed reports found._\n';
   }
 
-  // 6. Build GLOSSARY.md
+  // 7. Build glossary.md Content
   const personalize = (text) => (text ? text.replace(/{{GITHUB_USERNAME}}/g, GITHUB_USERNAME) : '');
-  const generatedAt = new Date().toLocaleString();
+  const groups = GLOSSARY_CONTENT?.sections || [];
 
   let glossarySectionsMd = '';
-  (GLOSSARY_CONTENT.sections || []).forEach((group) => {
-    let noteHeader = group.items.some((i) => i.entryMethod)
-      ? 'Entry Method'
-      : group.items.some((i) => i.howItIsCalculated)
-        ? 'Calculation Logic'
-        : 'Data Source';
 
-    glossarySectionsMd += `## ${group.title}\n\n_${personalize(group.description)}_\n\n`;
-    glossarySectionsMd += `| Metric | Description | ${noteHeader} |\n| :--- | :--- | :--- |\n`;
+  groups.forEach((group) => {
+    let noteHeader = 'Glossary Note';
+    const hasEntryMethod = group.items.some((i) => i.entryMethod);
+    const hasCalculation = group.items.some((i) => i.howItIsCalculated);
+    const hasSource = group.items.some((i) => i.source);
+
+    if (hasEntryMethod) noteHeader = 'Entry Method';
+    else if (hasCalculation) noteHeader = 'Calculation Logic';
+    else if (hasSource) noteHeader = 'Data Source';
+
+    glossarySectionsMd += `## ${group.title}\n\n`;
+    glossarySectionsMd += `_${personalize(group.description)}_\n\n`;
+    glossarySectionsMd += `| Metric | Description | ${noteHeader} |\n`;
+    glossarySectionsMd += `| :--- | :--- | :--- |\n`;
+
     group.items.forEach((item) => {
-      const note = item.entryMethod || item.howItIsCalculated || item.source || '';
-      glossarySectionsMd += `| **${item.title}** | ${personalize(item.description)} | ${personalize(note)} |\n`;
+      const rawNote = item.entryMethod || item.howItIsCalculated || item.source || '';
+
+      const tableSafeNote = personalize(rawNote)
+        .trim()
+        .replace(/\n/g, '<br>')
+        .replace(/(^|<br>)\s*\*\s+/g, '$1• ');
+
+      glossarySectionsMd += `| **${item.title}** | ${personalize(item.description)} | ${tableSafeNote} |\n`;
     });
+
     glossarySectionsMd += '\n';
   });
 
-  const glossaryMarkdown = `# 📖 Glossary\n\n${personalize(GLOSSARY_CONTENT.subtitle)}\n\n${glossarySectionsMd}\n---\n[← Back to Summary](./${MARKDOWN_README_FILENAME}) | *Last updated: ${generatedAt}*`;
+  const glossaryMarkdown = `# 📖 Glossary
 
-  // 7. Build README.md
+${personalize(GLOSSARY_CONTENT?.subtitle || 'Glossary details for contribution tracking.')}
+
+${glossarySectionsMd}
+---
+[← Back to Summary](./${MARKDOWN_README_FILENAME}) | *Last updated: ${generatedAt}*
+`;
+
+  // 8. Build README.md
   const readmeMarkdown = `# 📈 Open Source Contributions Report
 
-Organized by calendar quarter, these reports track [**${GITHUB_USERNAME}**](https://github.com/${GITHUB_USERNAME})'s involvement.
+Organized by year and quarter, these reports track contributions made by **[${GITHUB_USERNAME}](https://github.com/${GITHUB_USERNAME})** to external repositories since **${earliestYear}**. This portfolio summarizes all community activity—including merged, reviewed, and co-authored PRs, issues, and collaborations—alongside formal updates on the active workbench.
 
 > [!IMPORTANT]
-> Refer to the [**Glossary**](./${MARKDOWN_GLOSSARY_FILENAME}) for metric calculations.
+> To understand the criteria used for these metrics or to see how specific categories are calculated, please refer to the [**Glossary**](./${MARKDOWN_GLOSSARY_FILENAME}).
 
 ---
 
@@ -200,17 +244,17 @@ Organized by calendar quarter, these reports track [**${GITHUB_USERNAME}**](http
 | Context | Detail |
 | :--- | :--- |
 | 🏗️ **Unique Repositories** | **${totalUniqueRepos}** projects |
-| 📅 **Active Since** | **${earliestYear}** |
+| 📅 **Active Since** | **${earliestYear}** (${yearsTracked} years tracked) |
 
-### 🧩 Distribution
+### 🧩 Contribution Distribution
 
-| Category | Progress | Count | % |
+| Category | Progress | Count | Percentage |
 | :--- | :--- | :--- | :--- |
-| **Merged PRs** | \`${stats.prs.bar}\` | ${stats.prs.count} | ${stats.prs.pct} |
-| **Issues** | \`${stats.issues.bar}\` | ${stats.issues.count} | ${stats.issues.pct} |
-| **Reviewed PRs** | \`${stats.reviews.bar}\` | ${stats.reviews.count} | ${stats.reviews.pct} |
-| **Co-Authored PRs** | \`${stats.coauth.bar}\` | ${stats.coauth.count} | ${stats.coauth.pct} |
-| **Collaborations** | \`${stats.collab.bar}\` | ${stats.collab.count} | ${stats.collab.pct} |
+| ${stats.prs.isHighest ? '**Merged PRs**' : 'Merged PRs'} | \`${stats.prs.bar}\` | ${stats.prs.count} | ${stats.prs.pct} |
+| ${stats.issues.isHighest ? '**Issues**' : 'Issues'} | \`${stats.issues.bar}\` | ${stats.issues.count} | ${stats.issues.pct} |
+| ${stats.reviews.isHighest ? '**Reviewed PRs**' : 'Reviewed PRs'} | \`${stats.reviews.bar}\` | ${stats.reviews.count} | ${stats.reviews.pct} |
+| ${stats.coauth.isHighest ? '**Co-Authored PRs**' : 'Co-Authored PRs'} | \`${stats.coauth.bar}\` | ${stats.coauth.count} | ${stats.coauth.pct} |
+| ${stats.collab.isHighest ? '**Collaborations**' : 'Collaborations'} | \`${stats.collab.bar}\` | ${stats.collab.count} | ${stats.collab.pct} |
 
 ### 🎯 Primary Focus Projects
 
@@ -225,9 +269,10 @@ ${article} ${lowerDesc}
 ${reportLinksContent}
 
 ---
-*Report last generated on: ${generatedAt}*`;
+*Report last generated on: ${generatedAt}*
+`;
 
-  // 8. Write Files
+  // 9. Write Files
   await fs.writeFile(README_PATH, readmeMarkdown, 'utf8');
   await fs.writeFile(GLOSSARY_PATH, glossaryMarkdown, 'utf8');
 

@@ -37,10 +37,7 @@ function determinePersona(counts) {
     const currentCount = counts[curr.key] || 0;
     const prevCount = counts[prev.key] || 0;
 
-    // If current category has more contributions, it becomes the assigned persona
     if (currentCount > prevCount) return curr;
-
-    // If counts are equal, the one with the higher priority (lower number) wins
     if (currentCount === prevCount && curr.priority < prev.priority) return curr;
 
     return prev;
@@ -50,12 +47,8 @@ function determinePersona(counts) {
 /**
  * Generates the main landing page for the portfolio.
  */
-async function createIndexHtml(finalContributions = {}) {
+async function createIndexHtml(finalContributions = {}, articles = []) {
   await fs.mkdir(htmlBaseDir, { recursive: true });
-
-  const indexStyleCss = getIndexStyleCss();
-  const navHtml = createNavHtml('./');
-  const footerHtml = createFooterHtml();
 
   const prCount = finalContributions.pullRequests?.length || 0;
   const issueCount = finalContributions.issues?.length || 0;
@@ -156,7 +149,12 @@ async function createIndexHtml(finalContributions = {}) {
           .join('')
       : '<p class="text-sm text-slate-500 font-medium italic">No activity recorded yet.</p>';
 
-  const { title: personaTitle, desc: personaDesc } = determinePersona(countsDict);
+  const chosenPersona = determinePersona(countsDict);
+  const { title: personaTitle, desc: personaDesc, key: activePersonaKey } = chosenPersona;
+
+  const footerHtml = createFooterHtml();
+  const indexStyleCss = getIndexStyleCss();
+  const navHtml = createNavHtml('./');
 
   const htmlContent = dedent`
     <!DOCTYPE html>
@@ -218,7 +216,13 @@ async function createIndexHtml(finalContributions = {}) {
                 <div class="lg:col-span-2 flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden"> 
                   ${['Merged PRs', 'Issues', 'Reviewed PRs', 'Co-Authored PRs', 'Collaborations']
                     .map((label, idx) => {
-                      const key = ['prs', 'issues', 'reviews', 'coauth', 'collab'][idx];
+                      const key = [
+                        'prCount',
+                        'issueCount',
+                        'reviewedPrCount',
+                        'coAuthoredPrCount',
+                        'collaborationCount',
+                      ][idx];
                       const count = [
                         prCount,
                         issueCount,
@@ -226,9 +230,9 @@ async function createIndexHtml(finalContributions = {}) {
                         coAuthoredPrCount,
                         collaborationCount,
                       ][idx];
-                      const s = stats[key];
-                      const isHighest = grandTotal > 0 && count === maxCount;
-                      const barOpacity = isHighest ? 'opacity-100' : 'opacity-60';
+                      const statsKey = ['prs', 'issues', 'reviews', 'coauth', 'collab'][idx];
+                      const s = stats[statsKey];
+                      const isHighest = grandTotal > 0 && key === activePersonaKey;
 
                       const rowStyle = isHighest
                         ? `style="background-color: ${getColorValue(COLORS.primary[10] || '#f5f3ff')};"`
@@ -334,4 +338,4 @@ async function createIndexHtml(finalContributions = {}) {
   console.log('Generated landing page successfully at: ' + HTML_OUTPUT_PATH);
 }
 
-module.exports = { createIndexHtml };
+module.exports = { createIndexHtml, determinePersona };

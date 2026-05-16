@@ -187,48 +187,51 @@ ${index + 1}. [**${item[0]}**](${repoUrl}) (${item[1]} contributions)`;
       } else {
         // Build the HTML table as a single string
         let tableContent = `<table style='width:100%; table-layout:fixed;'>\n`;
-        tableContent += `  <thead>\n`;
-        tableContent += `    <tr>\n`;
+        tableContent += `  <thead>\n`;
+        tableContent += `    <tr>\n`;
         // Generate table headers with specified width styles
         for (let i = 0; i < sectionInfo.headers.length; i++) {
-          tableContent += `      <th style='width:${sectionInfo.widths[i]};'>${sectionInfo.headers[i]}</th>\n`;
+          tableContent += `      <th style='width:${sectionInfo.widths[i]};'>${sectionInfo.headers[i]}</th>\n`;
         }
-        tableContent += `    </tr>\n`;
-        tableContent += `  </thead>\n`;
-        tableContent += `  <tbody>\n`;
+        tableContent += `    </tr>\n`;
+        tableContent += `  </thead>\n`;
+        tableContent += `  <tbody>\n`;
 
         let counter = 1;
         // Iterate over each contribution item to build table rows
         for (const item of items) {
-          tableContent += `    <tr>\n`;
-          tableContent += `      <td>${counter++}.</td>\n`;
-          tableContent += `      <td>${item.repo}</td>\n`;
+          tableContent += `    <tr>\n`;
+          tableContent += `      <td>${counter++}.</td>\n`;
+          tableContent += `      <td>${item.repo}</td>\n`;
           // Add a hyperlink to the title
-          tableContent += `      <td><a href='${item.url}'>${item.title}</a></td>\n`;
+          tableContent += `      <td><a href='${item.url}'>${item.title}</a></td>\n`;
 
           // Logic for Merged PRs table structure
           if (section === 'pullRequests') {
             const createdAt = formatDate(item.createdAt);
-            const mergedAt = formatDate(item.mergedAt);
+            const mergedAt = formatDate(item.mergedAt || item.closedAt);
             // Calculate the time elapsed between creation and merge
-            const reviewPeriod = calculatePeriodInDays(item.createdAt, item.mergedAt);
+            const reviewPeriod = calculatePeriodInDays(
+              item.createdAt,
+              item.mergedAt || item.closedAt
+            );
 
-            tableContent += `      <td>${createdAt}</td>\n`;
-            tableContent += `      <td>${mergedAt}</td>\n`;
-            tableContent += `      <td>${reviewPeriod}</td>\n`;
+            tableContent += `      <td>${createdAt}</td>\n`;
+            tableContent += `      <td>${mergedAt}</td>\n`;
+            tableContent += `      <td>${reviewPeriod}</td>\n`;
             // Logic for Issues table structure
           } else if (section === 'issues') {
             const createdAt = formatDate(item.date);
             const closedAt = formatDate(item.closedAt);
 
-            tableContent += `      <td>${createdAt}</td>\n`;
-            tableContent += `      <td>${closedAt}</td>\n`;
+            tableContent += `      <td>${createdAt}</td>\n`;
+            tableContent += `      <td>${closedAt}</td>\n`;
 
             if (item.closedAt) {
               const closingPeriod = calculatePeriodInDays(item.date, item.closedAt);
-              tableContent += `      <td>${closingPeriod}</td>\n`;
+              tableContent += `      <td>${closingPeriod}</td>\n`;
             } else {
-              tableContent += `      <td>${getGitHubStatusBadge('OPEN')}</td>\n`;
+              tableContent += `      <td>${getGitHubStatusBadge('OPEN')}</td>\n`;
             }
             // Logic for Reviewed PRs table structure
           } else if (section === 'reviewedPrs') {
@@ -239,49 +242,61 @@ ${index + 1}. [**${item[0]}**](${repoUrl}) (${item[1]} contributions)`;
               item.myFirstReviewDate
             );
 
-            // Separate the last updated date from the status badge
-            const lastUpdatedDate = formatDate(item.date);
-            const statusBadgeText = item.mergedAt ? 'MERGED' : item.state || 'OPEN';
-            const statusBadge = getGitHubStatusBadge(statusBadgeText.toUpperCase());
+            const statusContentRaw = getPrStatusContent(item);
+            const statusPartsArray = statusContentRaw.split('<br>');
+            const lastUpdatedString = statusPartsArray[0];
+            const rawStatusTag = statusPartsArray[1];
 
-            tableContent += `      <td>${createdAt}</td>\n`;
-            tableContent += `      <td>${myFirstReviewAt}</td>\n`;
-            tableContent += `      <td>${myFirstReviewPeriod}</td>\n`;
-            tableContent += `      <td>${lastUpdatedDate}<br>${statusBadge}</td>\n`;
+            // Clean the tag and generate the badge
+            const cleanStatusLabel = rawStatusTag.replace(/<\/?strong>/g, '');
+            const finalStatusBadge = getGitHubStatusBadge(cleanStatusLabel.toUpperCase());
+
+            tableContent += `      <td>${createdAt}</td>\n`;
+            tableContent += `      <td>${myFirstReviewAt}</td>\n`;
+            tableContent += `      <td>${myFirstReviewPeriod}</td>\n`;
+            tableContent += `      <td>${lastUpdatedString}<br>${finalStatusBadge}</td>\n`;
             // Logic for Co-Authored PRs table structure
           } else if (section === 'coAuthoredPrs') {
             const createdAt = formatDate(item.createdAt);
             const firstCommitAt = formatDate(item.firstCommitDate);
             const firstCommitPeriod = calculatePeriodInDays(item.createdAt, item.firstCommitDate);
 
-            // Separate the last updated date from the status badge
-            const lastUpdatedDate = formatDate(item.date);
-            const statusBadgeText = item.mergedAt ? 'MERGED' : item.state || 'OPEN';
-            const statusBadge = getGitHubStatusBadge(statusBadgeText.toUpperCase());
+            const statusContentRaw = getPrStatusContent(item);
+            const statusPartsArray = statusContentRaw.split('<br>');
+            const lastUpdatedString = statusPartsArray[0];
+            const rawStatusTag = statusPartsArray[1];
 
-            tableContent += `      <td>${createdAt}</td>\n`;
-            tableContent += `      <td>${firstCommitAt}</td>\n`;
-            tableContent += `      <td>${firstCommitPeriod}</td>\n`;
-            tableContent += `      <td>${lastUpdatedDate}<br>${statusBadge}</td>\n`;
+            // Clean the tag and generate the badge
+            const cleanStatusLabel = rawStatusTag.replace(/<\/?strong>/g, '');
+            const finalStatusBadge = getGitHubStatusBadge(cleanStatusLabel.toUpperCase());
+
+            tableContent += `      <td>${createdAt}</td>\n`;
+            tableContent += `      <td>${firstCommitAt}</td>\n`;
+            tableContent += `      <td>${firstCommitPeriod}</td>\n`;
+            tableContent += `      <td>${lastUpdatedString}<br>${finalStatusBadge}</td>\n`;
             // Logic for Collaborations table structure
           } else if (section === 'collaborations') {
             const createdAt = formatDate(item.createdAt);
             const commentedAt = formatDate(item.firstCommentedAt);
 
-            // Separate the last updated date from the status badge
-            const lastUpdatedDate = formatDate(item.date);
-            const statusBadgeText = item.mergedAt ? 'MERGED' : item.state || 'OPEN';
-            const statusBadge = getGitHubStatusBadge(statusBadgeText.toUpperCase());
+            const statusContentRaw = getCollaborationStatusContent(item);
+            const statusPartsArray = statusContentRaw.split('<br>');
+            const lastUpdatedString = statusPartsArray[0];
+            const rawStatusTag = statusPartsArray[1];
 
-            tableContent += `      <td>${createdAt}</td>\n`;
-            tableContent += `      <td>${commentedAt}</td>\n`;
-            tableContent += `      <td>${lastUpdatedDate}<br>${statusBadge}</td>\n`;
+            // Clean the tag and generate the badge
+            const cleanStatusLabel = rawStatusTag.replace(/<\/?strong>/g, '');
+            const finalStatusBadge = getGitHubStatusBadge(cleanStatusLabel.toUpperCase());
+
+            tableContent += `      <td>${createdAt}</td>\n`;
+            tableContent += `      <td>${commentedAt}</td>\n`;
+            tableContent += `      <td>${lastUpdatedString}<br>${finalStatusBadge}</td>\n`;
           }
 
-          tableContent += `    </tr>\n`;
+          tableContent += `    </tr>\n`;
         }
 
-        tableContent += `  </tbody>\n`;
+        tableContent += `  </tbody>\n`;
         tableContent += `</table>\n`;
 
         // Add the finished table string to the markdown content
