@@ -19,12 +19,16 @@ function groupContributionsByQuarter(contributions) {
       } else if (type === 'coAuthoredPrs' && item.firstCommitDate) {
         // For co-authored PRs, use the date of first commit to determine the quarter
         dateStr = item.firstCommitDate;
-      } else {
-        // For all other types, use the regular date field
-        dateStr = item.date;
       }
 
-      if (!dateStr) continue;
+      if (!dateStr) {
+        dateStr = item.date || item.createdAt || item.closedAt || item.updatedAt;
+      }
+
+      if (!dateStr) {
+        console.warn(`Skipping item in ${type} due to missing date:`, item.title);
+        continue;
+      }
 
       const dateObj = new Date(dateStr);
       const year = dateObj.getFullYear();
