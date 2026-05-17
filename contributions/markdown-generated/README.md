@@ -1,9 +1,9 @@
 # 📈 Open Source Contributions Report
 
-Organized by calendar quarter, these reports track [**your-github-username**](https://github.com/your-github-username)'s involvement.
+Organized by year and quarter, these reports track contributions made by **[your-github-username](https://github.com/your-github-username)** to external repositories since **2026**. This portfolio summarizes all community activity—including merged, reviewed, and co-authored PRs, issues, and collaborations—alongside formal updates on the active workbench.
 
 > [!IMPORTANT]
-> Refer to the [**Glossary**](./glossary.md) for metric calculations.
+> To understand the criteria used for these metrics or to see how specific categories are calculated, please refer to the [**Glossary**](./glossary.md).
 
 ---
 
@@ -11,20 +11,20 @@ Organized by calendar quarter, these reports track [**your-github-username**](ht
 
 ### 🚀 Total Contributions: **0**
 
-| Context                    | Detail         |
-| :------------------------- | :------------- |
-| 🏗️ **Unique Repositories** | **0** projects |
-| 📅 **Active Since**        | **2026**       |
+| Context                    | Detail                     |
+| :------------------------- | :------------------------- |
+| 🏗️ **Unique Repositories** | **0** projects             |
+| 📅 **Active Since**        | **2026** (1 years tracked) |
 
-### 🧩 Distribution
+### 🧩 Contribution Distribution
 
-| Category            | Progress                         | Count | %    |
-| :------------------ | :------------------------------- | :---- | :--- |
-| **Merged PRs**      | `□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□` | 0     | 0.0% |
-| **Issues**          | `□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□` | 0     | 0.0% |
-| **Reviewed PRs**    | `□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□` | 0     | 0.0% |
-| **Co-Authored PRs** | `□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□` | 0     | 0.0% |
-| **Collaborations**  | `□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□` | 0     | 0.0% |
+| Category        | Progress                         | Count | Percentage |
+| :-------------- | :------------------------------- | :---- | :--------- |
+| Merged PRs      | `□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□` | 0     | 0.0%       |
+| Issues          | `□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□` | 0     | 0.0%       |
+| Reviewed PRs    | `□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□` | 0     | 0.0%       |
+| Co-Authored PRs | `□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□` | 0     | 0.0%       |
+| Collaborations  | `□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□` | 0     | 0.0%       |
 
 ### 🎯 Primary Focus Projects
 
@@ -42,4 +42,4 @@ _No detailed reports generated yet._
 
 ---
 
-_Report last generated on: 5/16/2026, 1:42:51 AM_
+_Report last generated on: 5/17/2026, 1:42:27 AM_
