@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-08-15
+
+### Added
+
+- **Theme engine**: Ported a light/dark/system theme engine (`scripts/config/theme.js` + `theme-engine.js`) with WCAG-gated derived color tokens, adapted so brand colors stay customizable via five seed colors.
+- **Theme toggle**: Added a theme dropdown, skip-to-content link, and back-to-top button to the navbar.
+
+### Changed
+
+- **Design system overhaul**: Rebuilt the navbar, footer, and landing page (impact band with a live "Last contribution Xh ago" indicator, contribution mix meters, primary focus, persona seal), and restyled the reports list, glossary, and per-quarter report pages to match.
+- **Brand color configuration**: Moved brand colors from a flat palette in `constants.js` to `scripts/config/theme.js`; documented customization in the README.
+
 ## [2.2.0] - 2026-05-16
 
 ### Added
