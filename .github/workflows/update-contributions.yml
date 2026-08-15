@@ -1,12 +1,28 @@
 name: Update Contributions
 
 on:
-  schedule:
-    # Monthly full sync at 00:01 UTC on the 1st of the month
-    - cron: '1 0 1 * *'
-    # Daily update at 01:00 UTC
-    - cron: '0 1 * * *'
   workflow_dispatch:
+    inputs:
+      sync_mode:
+        description: 'daily = fetch recent activity, full = rebuild all history'
+        type: choice
+        options:
+          - daily
+          - full
+        default: daily
+
+  # -------------------------------------------------------------------------
+  # AUTOMATIC UPDATES (opt-in)
+  #
+  # Set your GitHub handle in `scripts/config/config.js` first, then remove the
+  # `#` from the four lines below to let this run on its own. Until then, use
+  # the "Run workflow" button on the Actions tab.
+  # -------------------------------------------------------------------------
+  # schedule:
+  #   # Monthly full sync at 00:01 UTC on the 1st of the month
+  #   - cron: '1 0 1 * *'
+  #   # Daily update at 01:00 UTC
+  #   - cron: '0 1 * * *'
 
 jobs:
   run_scheduled_update:
@@ -16,24 +32,21 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          # Fetch full history to properly determine the last update date.
-          fetch-depth: 0 
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'  # Automatically handles node_modules caching
+          cache: 'npm' # Automatically handles node_modules caching
 
       - name: Install dependencies
-        run: npm ci  # Uses package-lock.json for exact versions
+        run: npm ci # Uses package-lock.json for exact versions
 
       - name: Conditionally run full sync or daily update
         run: |
-          # Check if the triggering schedule is the monthly cron
-          if [ "$SCHEDULE" = "1 0 1 * *" ]; then
-            echo "Running monthly full sync..."
+          # The monthly cron and the "full" button both mean: start over.
+          if [ "$SCHEDULE" = "1 0 1 * *" ] || [ "$REQUESTED" = "full" ]; then
+            echo "Running full sync..."
             # Force the script to do a full run by deleting the cache files
             rm -f data/all-contributions.json
             rm -f data/commit-cache.json
@@ -47,30 +60,31 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SCHEDULE: ${{ github.event.schedule }}
+          REQUESTED: ${{ inputs.sync_mode }}
 
       - name: Format generated files
         run: npm run format
-        
+
       - name: Commit and push changes
         id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
+
           # Add the generated files to the staging area
           git add contributions/markdown-generated/ contributions/html-generated/ data/
-          
+
           # Check if there are any changes to commit
           if ! git diff --staged --quiet; then
             # Use a different commit message based on the update type
-            if [ "$SCHEDULE" = "1 0 1 * *" ]; then
-                git commit -m "docs: Monthly full sync [skip ci]"
+            if [ "$SCHEDULE" = "1 0 1 * *" ] || [ "$REQUESTED" = "full" ]; then
+                git commit -m "docs: Full contributions sync [skip ci]"
             else
                 git commit -m "docs: Daily contributions update [skip ci]"
             fi
             git push
             # Signal that a push occurred
-            echo "pushed=true" >> $GITHUB_OUTPUT 
+            echo "pushed=true" >> $GITHUB_OUTPUT
           else
             echo "No changes to commit"
             # Signal no push occurred
@@ -78,13 +92,15 @@ jobs:
           fi
         env:
           SCHEDULE: ${{ github.event.schedule }}
+          REQUESTED: ${{ inputs.sync_mode }}
 
       # -----------------------------------------------------------------------
-      # DEPLOYMENT SETUP (OPTIONAL):
-      # This project automatically generates Markdown reports. 
-      # 
-      # If you wish to showcase your portfolio as a static website, you must write 
-      # and set up an additional action or build hook here to deploy the 
-      # 'contributions/html-generated/' directory to your own host 
-      # (e.g., Vercel, Netlify, or GitHub Pages).
+      # PUBLISHING A WEBSITE (OPTIONAL)
+      #
+      # You do NOT need to add anything here for most hosts. Netlify, Vercel and
+      # Cloudflare Pages watch your repository and redeploy on their own — just
+      # point them at the `contributions/html-generated/` folder.
+      #
+      # For GitHub Pages, use the included `deploy-pages.yml` workflow instead.
+      # See the "Publishing the Static Website" section of the README.
       # -----------------------------------------------------------------------

@@ -5,7 +5,7 @@ const targets = [
   'data',
   'contributions/markdown-generated',
   'contributions/html-generated',
-  '.github/workflows/demo-trigger.yml',
+  '.github/workflows/demo-site.yml',
 ];
 
 const cleanFolder = (dirPath, isRoot = true) => {
