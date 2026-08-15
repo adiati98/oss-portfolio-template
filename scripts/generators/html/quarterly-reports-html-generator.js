@@ -11,7 +11,13 @@ const {
 } = require('../../utils/contribution-formatters');
 
 // Import navbar and footer
-const { createNavHtml } = require('../../components/navbar');
+const {
+  createNavHtml,
+  createSkipToContentHtml,
+  createBackToTopHtml,
+  getBackToTopScript,
+  SHARED_CHROME_CSS,
+} = require('../../components/navbar');
 const { createFooterHtml } = require('../../components/footer');
 
 const { getReportStyleCss } = require('../css/style-generator');
@@ -21,10 +27,43 @@ const {
   SEARCH_SVG,
   LANDING_PAGE_ICONS,
   FAVICON_SVG_ENCODED,
-  COLORS,
 } = require('../../config/constants');
-const { getColorValue } = require('../../utils/color-helpers');
+const { getThemeInitScript, getThemeStyleVariant } = require('../../components/theme-init');
 const { sanitizeAttribute } = require('../../utils/html-helpers');
+
+// Status badge colors route straight through the theme engine's semantic
+// ladder (see theme-engine.js) — no hex, no fallback chain. MERGED uses the
+// `merged` ladder (GitHub's own merged-PR purple), matching GitHub's own
+// status color instead of sharing OPEN's green.
+const STATUS_BADGE_TOKENS = {
+  OPEN: { bg: 'var(--t-positive-wash)', text: 'var(--t-positive)' },
+  MERGED: { bg: 'var(--t-merged-wash)', text: 'var(--t-merged)' },
+  CLOSED: { bg: 'var(--t-critical-wash)', text: 'var(--t-critical)' },
+};
+const DEFAULT_STATUS_BADGE = { bg: 'var(--t-neutral-wash)', text: 'var(--t-neutral)' };
+
+// Supplements getReportStyleCss (shared, not owned by this generator) with
+// the row-stripe classes (replacing a per-row inline style) and small-screen
+// data-label attribute already styled by the shared stylesheet's table CSS.
+const QUARTERLY_EXTRA_CSS = `
+  .qr-ink2{color:var(--t-ink-2)}
+  .qr-surface2{background-color:var(--t-card-2)}
+  .qr-nav-card{background-color:var(--t-card)}
+  .qr-link{color:var(--t-brand)}
+  .qr-link:hover{color:var(--t-brand-strong)}
+  .qr-link:focus-visible{outline:2px solid var(--t-brand);outline-offset:2px}
+  .qr-repo{font-family:ui-monospace,monospace;font-size:.75rem;color:var(--t-ink-2);background:var(--t-card-2);border:1px solid var(--t-line);border-radius:5px;padding:2px 7px}
+
+  /* Row stripes as shared classes instead of a per-row inline transition. */
+  .qr-row-a, .qr-row-b { transition: background-color 0.15s ease-in-out; }
+  .qr-row-a { background-color: var(--t-card); }
+  .qr-row-b { background-color: var(--t-card-2); }
+  .qr-row-a:hover, .qr-row-b:hover { background-color: var(--t-brand-wash) !important; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .qr-link, .qr-row-a, .qr-row-b { transition: none !important; }
+  }
+`;
 
 /**
  * Generates and writes individual HTML report files for each quarter's contributions.
@@ -62,37 +101,16 @@ async function writeHtmlFiles(groupedContributions) {
     .sort((a, b) => a.key.localeCompare(b.key));
 
   /**
-   * Generates an HTML span for a status badge (e.g., OPEN, MERGED, CLOSED) with Tailwind-like styles.
+   * Generates an HTML span for a status badge (e.g., OPEN, MERGED, CLOSED).
    * @param {string} status - The raw status text.
    * @returns {string} HTML for the status badge.
    */
   function getStatusBadgeHtml(status) {
     const cleanedStatus = status.toUpperCase().trim();
-    let bgColor = COLORS.status?.gray?.bg || '#f1f5f9';
-    let textColor = COLORS.status?.gray?.text || '#475569';
-    let fontWeight = 'font-medium';
+    const tokens = STATUS_BADGE_TOKENS[cleanedStatus] || DEFAULT_STATUS_BADGE;
+    const fontWeight = STATUS_BADGE_TOKENS[cleanedStatus] ? 'font-semibold' : 'font-medium';
 
-    switch (cleanedStatus) {
-      case 'OPEN':
-        bgColor = COLORS.status?.green?.bg || '#dcfce7';
-        textColor = COLORS.status?.green?.text || '#166534';
-        fontWeight = 'font-semibold';
-        break;
-      case 'MERGED':
-        bgColor = COLORS.status?.purple?.bg || '#f3e8ff';
-        textColor = COLORS.status?.purple?.text || '#6b21a8';
-        fontWeight = 'font-semibold';
-        break;
-      case 'CLOSED':
-        bgColor = COLORS.status?.red?.bg || '#fee2e2';
-        textColor = COLORS.status?.red?.text || '#991b1b';
-        fontWeight = 'font-semibold';
-        break;
-      default:
-        break;
-    }
-
-    const style = `background-color: ${bgColor}; color: ${textColor};`;
+    const style = `background-color: ${tokens.bg}; color: ${tokens.text};`;
     return `<span class="inline-block px-2 py-0.5 text-xs rounded-full ${fontWeight}" style="${style}">${cleanedStatus}</span>`;
   }
 
@@ -140,18 +158,18 @@ async function writeHtmlFiles(groupedContributions) {
     };
 
     const baseClasses =
-      'w-40 xs:w-44 sm:w-52 h-20 p-2 sm:p-4 flex flex-col justify-center rounded-lg shadow-md transition duration-200 border border-gray-200';
+      'w-40 xs:w-44 sm:w-52 h-20 p-2 sm:p-4 flex flex-col justify-center rounded-lg shadow-md transition duration-200 border qr-nav-card';
 
     if (previousReport) {
       const prevPath = getReportPath(previousReport);
       previousButton = dedent`
-        <a href="${prevPath}" class="${baseClasses} bg-white nav-report-button text-left" style="color: ${getColorValue(COLORS.primary)};">
-          <span class="text-[10px] sm:text-xs font-medium text-gray-500">Previous</span>
-          <span class="flex items-center space-x-1 font-bold text-sm sm:text-lg break-words whitespace-normal" style="color: ${getColorValue(COLORS.primary)};">
+        <a href="${prevPath}" class="${baseClasses} nav-report-button text-left" style="color: var(--t-brand);">
+          <span class="text-[10px] sm:text-xs font-medium" style="color: var(--t-ink-3);">Previous</span>
+          <span class="flex items-center space-x-1 font-bold text-sm sm:text-lg break-words whitespace-normal" style="color: var(--t-brand);">
             ${LEFT_ARROW_SVG}
             <span class="whitespace-normal min-w-0">${previousReport.fullQuarterName}</span>
           </span>
-          
+
         </a>
       `;
     } else {
@@ -162,9 +180,9 @@ async function writeHtmlFiles(groupedContributions) {
     if (nextReport) {
       const nextPath = getReportPath(nextReport);
       nextButton = dedent`
-        <a href="${nextPath}" class="${baseClasses} bg-white nav-report-button text-right" style="color: ${getColorValue(COLORS.primary)};">
-          <span class="text-[10px] sm:text-xs font-medium text-gray-500">Next</span>
-          <span class="flex items-center space-x-1 justify-end font-bold text-sm sm:text-lg break-words whitespace-normal" style="color: ${getColorValue(COLORS.primary)};">
+        <a href="${nextPath}" class="${baseClasses} nav-report-button text-right" style="color: var(--t-brand);">
+          <span class="text-[10px] sm:text-xs font-medium" style="color: var(--t-ink-3);">Next</span>
+          <span class="flex items-center space-x-1 justify-end font-bold text-sm sm:text-lg break-words whitespace-normal" style="color: var(--t-brand);">
             <span class="whitespace-normal min-w-0">${nextReport.fullQuarterName}</span>
             ${RIGHT_ARROW_SVG}
           </span>
@@ -190,7 +208,7 @@ async function writeHtmlFiles(groupedContributions) {
   await fs.mkdir(htmlBaseDir, { recursive: true });
 
   // Pre-calculate the styles string to be included in the <style> tag.
-  const dynamicCss = getReportStyleCss();
+  const dynamicCss = getReportStyleCss() + QUARTERLY_EXTRA_CSS;
 
   // Iterate over each quarterly report to generate its dedicated HTML file.
   for (let index = 0; index < allReports.length; index++) {
@@ -234,7 +252,7 @@ async function writeHtmlFiles(groupedContributions) {
       .slice(0, 3)
       .map(
         (item) => dedent`
-          <li class="pl-2"><a href='https://github.com/${item[0]}' target='_blank' class="text-blue-600 hover:text-blue-800 hover:underline font-mono text-sm">${item[0]}</a> (${item[1]} contributions)</li>
+          <li class="pl-2"><a href='https://github.com/${item[0]}' target='_blank' rel="noopener noreferrer" class="qr-link font-mono text-sm">${item[0]}</a> (${item[1]} contributions)</li>
         `
       )
       .join('');
@@ -319,37 +337,43 @@ async function writeHtmlFiles(groupedContributions) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${quarter} ${year} Report | ${GITHUB_USERNAME} OSS Portfolio</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,${FAVICON_SVG_ENCODED}">
+  ${getThemeInitScript()}
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  ${getThemeStyleVariant()}
   <style>
     ${dynamicCss}
+    ${SHARED_CHROME_CSS}
   </style>
 </head>
-<body class="bg-white antialiased flex flex-col h-full min-h-full">
+<body style="background-color: var(--t-surface); color: var(--t-ink);" class="antialiased flex flex-col h-full min-h-full">
+${createSkipToContentHtml('main')}
 ${navHtmlForReports}
-  <main class="grow w-full">
+  <main id="main" class="grow w-full">
     <div class="px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-24 py-6 sm:py-10">
       <div class="max-w-[120ch] mx-auto">
-        <header style="border-bottom-color: ${COLORS.primary[15] || '#e2e8f0'};" class="text-center mt-16 mb-12 pb-4 border-b-2">
-          <h1 style="color: ${getColorValue(COLORS.primary)};" class="text-4xl sm:text-5xl font-extrabold mb-2 pt-8">${quarter} ${year}</h1>
-          <p class="text-lg text-gray-500 mt-2">Open Source Contributions Report</p>
+        <header style="border-bottom-color: var(--t-brand-line);" class="text-center mt-16 mb-12 pb-4 border-b-2">
+          <h1 style="color: var(--t-brand);" class="text-4xl sm:text-5xl font-extrabold mb-2 pt-8">${quarter} ${year}</h1>
+          <p class="text-lg qr-ink2 mt-2">Open Source Contributions Report</p>
         </header>
 
         <section class="mb-8">
-          <h2 style="border-left-color: ${getColorValue(COLORS.primary)};" class="text-3xl font-semibold text-gray-800 mb-12 border-l-4 pl-3">📊 Quarterly Statistics</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div style="background-color: ${getColorValue(COLORS.primary)};" class="text-white p-6 rounded-xl shadow-lg flex flex-col items-center justify-center">
-            <p class="text-4xl font-extrabold">${totalContributions}</p>
-            <p class="text-lg mt-2 font-medium">Total Contributions</p>
-          </div>
-          <div style="background-color: ${getColorValue(COLORS.primary)};" class="text-white p-6 rounded-xl shadow-lg flex flex-col items-center justify-center">
-            <p class="text-4xl font-extrabold">${totalRepos}</p>
-            <p class="text-lg mt-2 font-medium">Total Repositories</p>
-          </div>
+          <h2 style="color: var(--t-ink);" class="text-3xl font-semibold mb-12">📊 Quarterly Statistics</h2>
+          <div class="qr-impact">
+            <div class="qr-tiles">
+              <div class="qr-tile qr-tile--hero">
+                <span class="n">${totalContributions}</span>
+                <span class="c">Total Contributions</span>
+              </div>
+              <div class="qr-tile">
+                <span class="n">${totalRepos}</span>
+                <span class="c">Total Repositories</span>
+              </div>
+            </div>
           </div>
         </section>
 
         <section class="mb-8">
-          <h3 class="text-2xl font-semibold text-gray-800 mt-16 mb-4 border-l-4 border-green-500 pl-3">Contribution Breakdown</h3>
+          <h3 class="text-2xl font-semibold mt-16 mb-4 border-l-4 pl-3" style="color: var(--t-ink); border-left-color: var(--t-positive);">Contribution Breakdown</h3>
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 text-sm">
             ${[
               {
@@ -385,9 +409,9 @@ ${navHtmlForReports}
             ]
               .map(
                 (item) => `
-              <a href="#${item.id}" class="nav-contribution-button flex flex-col items-center p-3 bg-white border rounded-xl shadow-sm hover:shadow-lg transition text-center" style="color: ${getColorValue(COLORS.primary)};">
-                <span class="text-2xl font-bold" style="color: ${getColorValue(COLORS.primary)};">${item.count}</span>
-                <div class="flex items-center justify-center gap-1.5 text-gray-500 mt-1">
+              <a href="#${item.id}" class="nav-contribution-button qr-nav-card flex flex-col items-center p-3 border rounded-xl shadow-sm hover:shadow-lg transition text-center" style="color: var(--t-brand);">
+                <span class="text-2xl font-bold" style="color: var(--t-brand);">${item.count}</span>
+                <div class="flex items-center justify-center gap-1.5 qr-ink2 mt-1">
                   <span class="breakdown-icon-wrapper opacity-70">
                     ${item.icon}
                   </span>
@@ -401,16 +425,16 @@ ${navHtmlForReports}
         </section>
 
         <section class="mb-8">
-          <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-l-4 border-yellow-500 pl-3">Top 3 Repositories</h3>
-          <div class="p-4 bg-gray-50 rounded-lg shadow-sm">
-            <ol class="list-decimal list-inside pl-4 text-gray-600 space-y-1">
+          <h3 class="text-2xl font-semibold mb-4 border-l-4 pl-3" style="color: var(--t-ink); border-left-color: var(--t-caution);">Top 3 Repositories</h3>
+          <div class="p-4 qr-surface2 rounded-lg shadow-sm">
+            <ol class="list-decimal list-inside pl-4 qr-ink2 space-y-1">
               ${top3Repos}
             </ol>
           </div>
         </section>
 
-        <hr class="my-8 border-gray-200">
-      
+        <hr class="my-8" style="border-color: var(--t-line);">
+
         <section class="space-y-6">
     `;
 
@@ -430,8 +454,8 @@ ${navHtmlForReports}
       }
 
       // Details tag is used for collapsible sections.
-      htmlContent += `<details id="${sectionInfo.id}" class="border border-gray-200 rounded-xl p-4 shadow-sm">\n`;
-      htmlContent += ` <summary style="color: ${getColorValue(COLORS.primary)};" class="text-xl font-bold cursor-pointer outline-none">\n`;
+      htmlContent += `<details id="${sectionInfo.id}" class="border rounded-xl p-4 shadow-sm" style="border-color: var(--t-line);">\n`;
+      htmlContent += ` <summary style="color: var(--t-brand);" class="text-xl font-bold cursor-pointer outline-none">\n`;
       htmlContent += `  <div class="inline-flex items-center flex-nowrap gap-2 ml-3" style="vertical-align: middle;">\n`;
       htmlContent += `    <span class="w-6 h-6 flex items-center shrink-0">${sectionInfo.icon}</span>\n`;
       htmlContent += `    <span class="text-xl font-bold whitespace-nowrap">${sectionInfo.title} (${items.length})</span>\n`;
@@ -439,7 +463,7 @@ ${navHtmlForReports}
       htmlContent += ` </summary>\n`;
 
       if (!items || items.length === 0) {
-        htmlContent += `<div class="p-4 text-gray-500 bg-gray-50 rounded-lg">No contributions of this type in this quarter.</div>\n`;
+        htmlContent += `<div class="p-4 qr-ink2 qr-surface2 rounded-lg">No contributions of this type in this quarter.</div>\n`;
       } else {
         // Search bar with icon styling for the table in the current section.
         const searchInputId = `${sectionInfo.id}-search`;
@@ -448,26 +472,27 @@ ${navHtmlForReports}
 
         htmlContent += dedent`
           <div class="flex flex-wrap gap-2 items-center mb-4 mt-2 px-1">
-            
+
             <div class="icon-input-container grow">
-              <div class="input-icon" style="color: ${getColorValue(COLORS.primary)};">
+              <div class="input-icon" style="color: var(--t-brand);">
                 ${SEARCH_SVG}
               </div>
-              
-              <input 
-                type="text" 
-                id="${searchInputId}" 
-                placeholder="${visualPlaceholder}" 
+
+              <input
+                type="text"
+                id="${searchInputId}"
+                placeholder="${visualPlaceholder}"
                 aria-label="${accessibleLabel}"
-                class="search-input w-full border rounded-md 
+                class="search-input w-full border rounded-md
                 px-3 py-2 text-sm focus:outline-none focus:ring-1 transition"
-                style="border-color: ${getColorValue(COLORS.primary)};"
+                style="border-color: var(--t-brand);"
               />
             </div>
 
-            <button 
-            class="reset-btn bg-gray-100 
-            hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-md text-sm font-medium transition"
+            <button
+            class="reset-btn qr-surface2
+            hover:opacity-80 px-3 py-2 rounded-md text-sm font-medium transition"
+            style="color: var(--t-ink-2);"
             >
               Reset
             </button>
@@ -475,9 +500,9 @@ ${navHtmlForReports}
         `;
 
         // Generate the contribution table.
-        let tableContent = `<div class="overflow-x-auto rounded-lg border border-gray-100 max-h-[70vh] overflow-y-auto">\n`;
-        tableContent += ` <table class="report-table min-w-full divide-y divide-gray-200 bg-white">\n`;
-        tableContent += `  <thead class="bg-white">\n`;
+        let tableContent = `<div class="overflow-x-auto rounded-lg border max-h-[70vh] overflow-y-auto" style="border-color: var(--t-line);">\n`;
+        tableContent += ` <table class="report-table min-w-full">\n`;
+        tableContent += `  <thead>\n`;
         tableContent += `    <tr>\n`;
 
         // Generate table headers with sorting attributes (data-type).
@@ -491,34 +516,32 @@ ${navHtmlForReports}
             : `<span class="th-content">${sectionInfo.headers[i]} <span class="sort-icon ml-1">↕</span></span>`;
           const cursorStyle = isStaticColumn ? 'cursor: default;' : 'cursor: pointer;';
 
-          tableContent += `     <th ${thAttributes} class="py-3 px-4" style="color: ${getColorValue(COLORS.primary)}; ${cursorStyle}">
+          tableContent += `     <th ${thAttributes} class="py-3 px-4" style="color: var(--t-brand); ${cursorStyle}">
               ${headerContent}
           </th>\n`;
         }
         tableContent += `    </tr>\n`;
         tableContent += `  </thead>\n`;
-        tableContent += `  <tbody class="divide-y divide-gray-100">\n`;
+        tableContent += `  <tbody>\n`;
 
         let counter = 1;
         // Generate table rows, mapping data properties to columns.
         for (const item of items) {
-          const rowBg = counter % 2 === 1 ? 'bg-white' : 'bg-gray-50';
+          const rowClass = counter % 2 === 1 ? 'qr-row-a' : 'qr-row-b';
           const safeTitle = sanitizeAttribute(item.title);
 
-          // Row with data-href to enable click navigation.
-          const rowClass = `${rowBg} table-row-hover`;
-          tableContent += `   <tr class="${rowClass}" style="transition: background-color 0.15s ease-in-out;">\n`;
+          tableContent += `   <tr class="${rowClass}">\n`;
 
           // No. column (not sortable).
           tableContent += `     <td>${counter++}.</td>\n`;
 
           // Repo column (String type).
-          const repoSpanHtml = `<span class="font-mono text-xs bg-gray-100 p-1 rounded">${item.repo}</span>`;
-          tableContent += `     <td data-value="${item.repo}" data-col-type="string">${repoSpanHtml}</td>\n`;
+          const repoSpanHtml = `<span class="qr-repo">${item.repo}</span>`;
+          tableContent += `     <td data-value="${item.repo}" data-col-type="string" data-label="Project">${repoSpanHtml}</td>\n`;
 
           // Title column (String type, contains hyperlink).
-          const linkHtml = `<a href='${item.url}' target='_blank' class="text-blue-600 hover:text-blue-800 hover:underline">${item.title}</a>`;
-          tableContent += `     <td data-value="${safeTitle}" data-col-type="string">${linkHtml}</td>\n`;
+          const linkHtml = `<a href='${item.url}' target='_blank' rel="noopener noreferrer" class="qr-link">${item.title}</a>`;
+          tableContent += `     <td data-value="${safeTitle}" data-col-type="string" data-label="Title">${linkHtml}</td>\n`;
 
           // Handle the remaining columns based on the contribution type.
           if (section === 'pullRequests') {
@@ -531,9 +554,9 @@ ${navHtmlForReports}
             const reviewPeriod = calculatePeriodInDays(item.createdAt, completedAtDate);
             const daysNum = reviewPeriod.replace(/[^0-9]/g, '') || 0;
 
-            tableContent += ` <td data-value="${item.createdAt}" data-col-type="date">${createdAt}</td>\n`;
-            tableContent += ` <td data-value="${completedAtDate || ''}" data-col-type="date">${completedAtFormatted}</td>\n`;
-            tableContent += ` <td data-value="${daysNum}" data-col-type="number">${reviewPeriod}</td>\n`;
+            tableContent += ` <td data-value="${item.createdAt}" data-col-type="date" data-label="${sectionInfo.headers[3]}">${createdAt}</td>\n`;
+            tableContent += ` <td data-value="${completedAtDate || ''}" data-col-type="date" data-label="${sectionInfo.headers[4]}">${completedAtFormatted}</td>\n`;
+            tableContent += ` <td data-value="${daysNum}" data-col-type="number" data-label="${sectionInfo.headers[5]}">${reviewPeriod}</td>\n`;
           } else if (section === 'issues') {
             const createdAt = formatDate(item.date);
             const closedAt = formatDate(item.closedAt);
@@ -552,9 +575,9 @@ ${navHtmlForReports}
               sortValue = sortValue || '0';
             }
 
-            tableContent += `     <td data-value="${item.date}" data-col-type="date">${createdAt}</td>\n`;
-            tableContent += `     <td data-value="${item.closedAt}" data-col-type="date">${closedAt}</td>\n`;
-            tableContent += `     <td data-value="${sortValue}" data-col-type="number">${closingPeriodHtml}</td>\n`;
+            tableContent += `     <td data-value="${item.date}" data-col-type="date" data-label="${sectionInfo.headers[3]}">${createdAt}</td>\n`;
+            tableContent += `     <td data-value="${item.closedAt}" data-col-type="date" data-label="${sectionInfo.headers[4]}">${closedAt}</td>\n`;
+            tableContent += `     <td data-value="${sortValue}" data-col-type="number" data-label="${sectionInfo.headers[5]}">${closingPeriodHtml}</td>\n`;
           } else if (section === 'reviewedPrs') {
             const createdAt = formatDate(item.createdAt);
             const myFirstReviewAt = formatDate(item.myFirstReviewDate);
@@ -566,10 +589,10 @@ ${navHtmlForReports}
 
             const statusObj = formatPrStatusWithBadge(getPrStatusContent(item));
 
-            tableContent += `     <td data-value="${item.createdAt}" data-col-type="date">${createdAt}</td>\n`;
-            tableContent += `     <td data-value="${item.myFirstReviewDate}" data-col-type="date">${myFirstReviewAt}</td>\n`;
-            tableContent += `     <td data-value="${daysNum}" data-col-type="number">${myFirstReviewPeriod}</td>\n`;
-            tableContent += `     <td data-value="${statusObj.statusText}" data-col-type="status">${statusObj.html}</td>\n`;
+            tableContent += `     <td data-value="${item.createdAt}" data-col-type="date" data-label="${sectionInfo.headers[3]}">${createdAt}</td>\n`;
+            tableContent += `     <td data-value="${item.myFirstReviewDate}" data-col-type="date" data-label="${sectionInfo.headers[4]}">${myFirstReviewAt}</td>\n`;
+            tableContent += `     <td data-value="${daysNum}" data-col-type="number" data-label="${sectionInfo.headers[5]}">${myFirstReviewPeriod}</td>\n`;
+            tableContent += `     <td data-value="${statusObj.statusText}" data-col-type="status" data-label="${sectionInfo.headers[6]}">${statusObj.html}</td>\n`;
           } else if (section === 'coAuthoredPrs') {
             const createdAt = formatDate(item.createdAt);
             const firstCommitAt = formatDate(item.firstCommitDate);
@@ -578,19 +601,19 @@ ${navHtmlForReports}
 
             const statusObj = formatPrStatusWithBadge(getPrStatusContent(item));
 
-            tableContent += `     <td data-value="${item.createdAt}" data-col-type="date">${createdAt}</td>\n`;
-            tableContent += `     <td data-value="${item.firstCommitDate}" data-col-type="date">${firstCommitAt}</td>\n`;
-            tableContent += `     <td data-value="${daysNum}" data-col-type="number">${firstCommitPeriod}</td>\n`;
-            tableContent += `     <td data-value="${statusObj.statusText}" data-col-type="status">${statusObj.html}</td>\n`;
+            tableContent += `     <td data-value="${item.createdAt}" data-col-type="date" data-label="${sectionInfo.headers[3]}">${createdAt}</td>\n`;
+            tableContent += `     <td data-value="${item.firstCommitDate}" data-col-type="date" data-label="${sectionInfo.headers[4]}">${firstCommitAt}</td>\n`;
+            tableContent += `     <td data-value="${daysNum}" data-col-type="number" data-label="${sectionInfo.headers[5]}">${firstCommitPeriod}</td>\n`;
+            tableContent += `     <td data-value="${statusObj.statusText}" data-col-type="status" data-label="${sectionInfo.headers[6]}">${statusObj.html}</td>\n`;
           } else if (section === 'collaborations') {
             const createdAt = formatDate(item.createdAt);
             const commentedAt = formatDate(item.firstCommentedAt);
             const statusObj = formatPrStatusWithBadge(getCollaborationStatusContent(item));
 
-            tableContent += ` <td data-value="${item.createdAt}" data-col-type="date">${createdAt}</td>\n`;
-            tableContent += ` <td data-value="${item.firstCommentedAt || ''}" data-col-type="date">${commentedAt}</td>\n`;
+            tableContent += ` <td data-value="${item.createdAt}" data-col-type="date" data-label="${sectionInfo.headers[3]}">${createdAt}</td>\n`;
+            tableContent += ` <td data-value="${item.firstCommentedAt || ''}" data-col-type="date" data-label="${sectionInfo.headers[4]}">${commentedAt}</td>\n`;
             // Using updatedAt for the status column's date value to ensure proper sorting
-            tableContent += ` <td data-value="${statusObj.statusText}" data-col-type="status">${statusObj.html}</td>\n`;
+            tableContent += ` <td data-value="${statusObj.statusText}" data-col-type="status" data-label="${sectionInfo.headers[5]}">${statusObj.html}</td>\n`;
           }
 
           tableContent += `    </tr>\n`;
@@ -617,7 +640,7 @@ ${navHtmlForReports}
     </main>
     <script>
       ${tableFiltersScript}
-      
+
       // Function to open the correct section based on the URL hash, defaulting to 'Merged PRs'.
       function openSectionFromHash() {
         const hash = window.location.hash;
@@ -629,7 +652,8 @@ ${navHtmlForReports}
             targetDetails.open = true;
             // Scroll to the opened section with a slight delay
             setTimeout(() => {
-              targetDetails.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+              targetDetails.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
             }, 100);
           }
         } else {
@@ -642,11 +666,13 @@ ${navHtmlForReports}
       window.addEventListener('hashchange', openSectionFromHash);
     </script>
 ${footerHtml}
+${createBackToTopHtml()}
+${getBackToTopScript()}
     </body>
 </html>
 `;
     // Clean up non-breaking spaces and trailing whitespace before formatting.
-    htmlContent = htmlContent.replace(/\u00A0/g, ' ').replace(/[ \t]+$/gm, '');
+    htmlContent = htmlContent.replace(/ /g, ' ').replace(/[ \t]+$/gm, '');
 
     // Use Prettier to format the final HTML content.
     const formattedContent = await prettier.format(htmlContent, {

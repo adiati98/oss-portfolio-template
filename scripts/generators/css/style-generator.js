@@ -3,7 +3,7 @@
  */
 
 const { dedent } = require('../../utils/dedent');
-const { COLORS } = require('../../config/constants');
+const { THEME_CSS_VARS } = require('../../config/constants');
 
 // --- 1. BASE STYLES (Shared by all pages) ---
 
@@ -14,15 +14,21 @@ const { COLORS } = require('../../config/constants');
 function getCommonBaseCss() {
   return dedent`
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+    ${THEME_CSS_VARS}
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
       max-width: 100%;
-      overflow-x: hidden;
-      position: relative;
     }
     body {
+      /* overflow-x/position live on body, not html — overflow on the root
+         element is a well-documented trigger for browsers (notably iOS
+         Safari) to stop treating the viewport as the containing block for
+         position:fixed descendants, which silently breaks the back-to-top
+         button on every page built from this base CSS. */
+      overflow-x: hidden;
+      position: relative;
       font-family: 'Inter', sans-serif;
       min-height: 10vh;
       display: flex;
@@ -31,28 +37,28 @@ function getCommonBaseCss() {
 
     /* Navigation Buttons */
     .nav-report-button {
-      border: 1px solid ${COLORS.border.light} !important;
+      border: 1px solid var(--t-line) !important;
       transition: border-color 0.15s ease-in-out !important;
     }
     .nav-report-button:hover {
-      border-color: ${COLORS.primary.rgb} !important;
+      border-color: var(--t-brand) !important;
     }
     .nav-report-button:focus-visible {
-      border-color: ${COLORS.primary.rgb};
-      outline: 2px solid ${COLORS.primary.rgb};
+      border-color: var(--t-brand);
+      outline: 2px solid var(--t-brand);
       outline-offset: 2px;
     }
-        
+
     .nav-contribution-button {
-      border: 1px solid ${COLORS.border.light} !important;
+      border: 1px solid var(--t-line) !important;
       transition: border-color 0.15s ease-in-out !important;
     }
     .nav-contribution-button:hover {
-      border-color: ${COLORS.primary.rgb} !important;
+      border-color: var(--t-brand) !important;
     }
-    .nav-contribution-button:focus-visible { 
-      border-color: ${COLORS.primary.rgb};
-      outline: 2px solid ${COLORS.primary.rgb};
+    .nav-contribution-button:focus-visible {
+      border-color: var(--t-brand);
+      outline: 2px solid var(--t-brand);
       outline-offset: 2px;
     }
 
@@ -85,7 +91,7 @@ function getCommonBaseCss() {
         height: 0.75rem;
       }
       .breakdown-label {
-        font-size: 0.7rem !important; /* slightly smaller than xs */
+        font-size: 0.75rem !important;
       }
     }
   `;
@@ -94,37 +100,7 @@ function getCommonBaseCss() {
 // --- 2. FUNCTIONS FOR EACH HTML GENERATOR ---
 
 /**
- * Generates the CSS block for the Landing Page head.
- */
-function getIndexStyleCss() {
-  return dedent`
-    ${getCommonBaseCss()}
-
-    /* Custom font size between md and lg */
-    .text-md-lg {
-      font-size: 1.0625rem;
-      line-height: 1.625rem;
-    }
-
-    /* Hover state for links using the secondary text color */
-    .hover-underline-primary:hover {
-      text-decoration: underline;
-      text-underline-offset: 4px;
-      text-decoration-color: ${COLORS.primary.rgb};
-    }
-
-    /* Animation for the Contribution Bars */
-    @keyframes loadBar {
-      from { width: 0; }
-    }
-    .progress-bar {
-      animation: loadBar 1s ease-out forwards;
-    }
-  `;
-}
-
-/**
- * Generates the CSS block for the Quarterly Reports List (reports.html).
+ * Generates the CSS block for the Quarterly Reports List (reports.html) HTML head.
  */
 function getReportsListStyleCss() {
   return dedent`
@@ -135,32 +111,32 @@ function getReportsListStyleCss() {
     .report-list a {
       text-decoration: none;
     }
-        
+
     details summary {
       cursor: pointer;
       outline: none;
-      color: ${COLORS.text.primary};
+      color: var(--t-ink);
       transition: background-color 0.15s ease-in-out;
     }
     summary:focus-visible {
-      outline: 2px solid ${COLORS.primary.rgb};
+      outline: 2px solid var(--t-brand);
       outline-offset: 2px;
     }
 
     details[open] {
-      background-color: ${COLORS.primary[5]};
+      background-color: var(--t-brand-wash);
     }
     details[open] summary {
-      background-color: ${COLORS.primary[5]};
+      background-color: var(--t-brand-wash);
       border-radius: 0.5rem 0.5rem 0 0;
-      color: ${COLORS.primary.rgb};
+      color: var(--t-brand);
     }
     details[open] summary:hover,
     details[open] summary:focus-visible {
-      background-color: ${COLORS.primary[10]};
+      background-color: var(--t-brand-line);
     }
     details:not([open]) {
-      background-color: ${COLORS.background.altRows};
+      background-color: var(--t-card-2);
     }
     details:not([open]) summary {
       border-bottom: none;
@@ -168,19 +144,19 @@ function getReportsListStyleCss() {
     }
     details:not([open]) summary:hover,
     details:not([open]) summary:focus-visible {
-      background-color: ${COLORS.primary[5]};
+      background-color: var(--t-brand-wash);
     }
 
     .report-card-link {
-      border: 1px solid ${COLORS.border.light} !important;
+      border: 1px solid var(--t-line) !important;
       transition: border-color 0.15s ease-in-out !important;
     }
     .report-card-link:hover {
-      border-color: ${COLORS.primary.rgb} !important;
+      border-color: var(--t-brand) !important;
     }
     .report-card-link:focus-visible {
-      border-color: ${COLORS.primary.rgb};
-      outline: 2px solid ${COLORS.primary.rgb};
+      border-color: var(--t-brand);
+      outline: 2px solid var(--t-brand);
       outline-offset: 2px;
     }
   `;
@@ -192,18 +168,34 @@ function getReportsListStyleCss() {
 function getReportStyleCss() {
   return dedent`
     ${getCommonBaseCss()}
-    
+
+    /* Quarterly impact band — mirrors the landing page's impact-tile
+       pattern, scoped to a single closed quarter. */
+    .qr-impact{background:var(--t-card);border:1px solid var(--t-line);border-radius:14px;overflow:hidden;margin-bottom:32px;box-shadow:var(--t-shadow)}
+    .qr-impact-top{padding:14px 18px;border-bottom:1px solid var(--t-line);background:linear-gradient(120deg,var(--t-brand-wash),var(--t-card-2) 62%)}
+    .qr-impact-top h2{font-size:1.05rem;font-weight:800;margin:0;color:var(--t-ink)}
+    .qr-impact-top h2 span{color:var(--t-ink-3);font-weight:400;font-size:.86rem}
+    .qr-tiles{display:grid;grid-template-columns:repeat(2,1fr)}
+    .qr-tile{padding:15px 18px;border-right:1px solid var(--t-line);display:flex;flex-direction:column;gap:2px;text-decoration:none;transition:background .15s ease}
+    .qr-tile:last-child{border-right:0}
+    a.qr-tile:hover{background:var(--t-card-2)}
+    .qr-tile .n{font-weight:800;font-size:2.05rem;line-height:1.08;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--t-ink)}
+    .qr-tile .c{font-size:.76rem;color:var(--t-ink-2);line-height:1.35}
+    .qr-tile--hero{background:linear-gradient(150deg,var(--t-brand-strong),var(--t-brand))}
+    .qr-tile--hero .n,.qr-tile--hero .c{color:var(--t-on-brand)}
+    .qr-tile--hero .c{opacity:.85}
+
     summary {
       cursor: pointer;
       outline: none;
       margin: 0.5em 0;
       padding: 0.5em 0;
-      color: #1f2937;
+      color: var(--t-ink);
       display: list-item;
       white-space: nowrap;
     }
     summary:focus-visible {
-      outline: 2px solid ${COLORS.primary.rgb};
+      outline: 2px solid var(--t-brand);
       outline-offset: 2px;
     }
 
@@ -215,10 +207,10 @@ function getReportStyleCss() {
     }
 
     .details-section {
-      background-color: ${COLORS.primary[5]};
+      background-color: var(--t-brand-wash);
     }
     .details-section details:open summary {
-      color: ${COLORS.primary.rgb};
+      color: var(--t-brand);
     }
 
     .report-table {
@@ -231,24 +223,24 @@ function getReportStyleCss() {
       position: sticky;
       top: 0;
       z-index: 10;
-      background-color: #ffffff;
-      background-image: linear-gradient(${COLORS.primary[5]}, ${COLORS.primary[5]});
+      background-color: var(--t-card);
+      background-image: linear-gradient(var(--t-brand-wash), var(--t-brand-wash));
       font-weight: 700;
       padding: 12px;
       text-align: left;
       border-bottom: none;
-      box-shadow: inset 0 -1px 0 0 ${COLORS.primary.rgb};
+      box-shadow: inset 0 -1px 0 0 var(--t-brand);
     }
 
     .report-table td {
-      background-color: #ffffff;
+      background-color: var(--t-card);
     }
 
     .report-table th,
     .report-table td {
       padding: 12px;
       text-align: left;
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 1px solid var(--t-line);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -257,23 +249,23 @@ function getReportStyleCss() {
     .report-table tbody tr:last-child td {
       border-bottom: none;
     }
-        
+
     .table-row-hover {
       background-color: inherit;
     }
 
     .table-row-hover:hover,
     .table-row-hover:focus-visible {
-      background-color: ${COLORS.primary[10]} !important;
+      background-color: var(--t-brand-wash) !important;
     }
 
     .table-row-hover:focus-visible {
-      outline: 2px solid ${COLORS.primary.rgb};
+      outline: 2px solid var(--t-brand);
       outline-offset: -2px;
     }
 
-    .report-table tbody tr.bg-white { background-color: #ffffff; }
-    .report-table tbody tr.bg-gray-50 { background-color: #f9fafb; }
+    .report-table tbody tr.bg-white { background-color: var(--t-card); }
+    .report-table tbody tr.bg-gray-50 { background-color: var(--t-card-2); }
 
     .th-content {
       display: inline-flex;
@@ -281,7 +273,7 @@ function getReportStyleCss() {
       gap: 4px;
       vertical-align: middle;
     }
-    
+
     .sort-icon {
       display: inline-flex;
       align-items: center;
@@ -295,7 +287,7 @@ function getReportStyleCss() {
     th.sort-custom1 .sort-icon,
     th.sort-custom2 .sort-icon {
       opacity: 1 !important;
-      color: ${COLORS.primary.rgb} !important;
+      color: var(--t-brand) !important;
       font-weight: bold;
     }
 
@@ -314,14 +306,64 @@ function getReportStyleCss() {
     }
 
     .search-input {
-      border-color: ${COLORS.primary.rgb};
+      border-color: var(--t-brand);
+      background-color: var(--t-card);
+      color: var(--t-ink);
       transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+    .search-input::placeholder {
+      color: var(--t-ink-3);
     }
     .search-input:focus,
     .search-input:focus-visible {
-      border-color: ${COLORS.primary[15]} !important;
-      box-shadow: 0 0 0 1px ${COLORS.primary[25]};
+      border-color: var(--t-brand-line) !important;
+      box-shadow: 0 0 0 1px var(--t-brand-line);
       outline: none;
+    }
+
+    /* Below 640px, contribution tables become stacked cards: one card per
+       row, each field labeled from the column header. */
+    @media (max-width: 640px) {
+      .report-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      .report-table, .report-table tbody, .report-table tr { display: block; width: 100%; }
+      .report-table tr { border: 1px solid var(--t-line); border-radius: 10px; margin-bottom: 10px; padding: 10px 12px; }
+      .report-table td {
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        border-bottom: 1px solid var(--t-line);
+        padding: 6px 0;
+      }
+      .report-table td:last-child { border-bottom: 0; }
+      .report-table td[data-label]::before {
+        content: attr(data-label);
+        flex: 0 0 42%;
+        font-family: ui-monospace, monospace;
+        font-size: .75rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--t-ink-3);
+      }
+      .report-table td[data-label] > * {
+        flex: 1 1 0%;
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+      .report-table td:first-child { font-weight: 800; border-bottom: 0; padding-bottom: 2px; }
+      .report-table td:nth-child(3) { font-weight: 600; }
     }
 
     @media (max-width: 400px) {
@@ -337,6 +379,12 @@ function getReportStyleCss() {
         margin-left: 4px !important;
       }
     }
+
+    @media (prefers-reduced-motion: reduce) {
+      .qr-tile, a.qr-tile, .nav-report-button, .nav-contribution-button, .search-input, summary {
+        transition: none !important;
+      }
+    }
   `;
 }
 
@@ -346,7 +394,7 @@ function getReportStyleCss() {
 function getGlossaryStyleCss() {
   return dedent`
     ${getCommonBaseCss()}
-    
+
     .glossary-content {
       line-height: 1.8;
     }
@@ -355,8 +403,8 @@ function getGlossaryStyleCss() {
     .glossary-code-block {
       display: block;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      background-color: #f8fafc;
-      border: 1px solid #e2e8f0;
+      background-color: var(--t-card-2);
+      border: 1px solid var(--t-line);
     }
 
     /* Target the text inside to ensure monospace inheritance */
@@ -366,7 +414,7 @@ function getGlossaryStyleCss() {
 
     /* Bold text: Clean, high-contrast, no background color */
     .glossary-content strong {
-      color: #3730a3; /* text-indigo-800 */
+      color: var(--t-brand-strong);
       font-weight: 900;
       background-color: transparent !important;
       padding: 0;
@@ -374,7 +422,7 @@ function getGlossaryStyleCss() {
 
     /* Highlight the section when navigating via URL hash (#) */
     :target {
-      background-color: ${COLORS.primary[5]};
+      background-color: var(--t-brand-wash);
       border-radius: 1rem;
       transition: background-color 0.5s ease;
       padding: 1rem;
@@ -383,14 +431,13 @@ function getGlossaryStyleCss() {
     }
 
     :target h3 {
-      color: ${COLORS.primary.rgb} !important;
+      color: var(--t-brand) !important;
     }
   `;
 }
 
 module.exports = {
   getReportStyleCss,
-  getIndexStyleCss,
   getReportsListStyleCss,
   getGlossaryStyleCss,
 };

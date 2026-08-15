@@ -100,18 +100,29 @@ The script generates optional HTML files for a more visual showcase.
 > [!NOTE]
 > **Deployment Setup:** This project automatically pushes data updates. If your hosting provider requires a manual Build Hook (like Netlify) to trigger a build, you must write and set up your specific deployment action at the bottom of the `.github/workflows/update-contributions.yml` file.
 
-### 🎨 Customizing Colors
+### 🎨 Customizing Your Brand Colors
 
-If you choose to host the static website, you can change the theme by updating the `COLOR_PALETTE` in `scripts/config/constants.js`. The system automatically updates backgrounds, borders, and even the favicon to match your chosen hex codes.
+To use your own brand colors, update the five values in `scripts/config/theme.js`:
 
 ```javascript
-const COLOR_PALETTE = {
-  primary: '#4338CA',    // Your main brand color
-  success: '#10b981',    // Color for Open items
-  merged: '#8b5cf6',     // Color for Merged items
-  error: '#ef4444',      // Color for Closed items
+// scripts/config/theme.js
+
+module.exports = {
+  brand: '#4338CA',     // your main brand color
+  positive: '#10b981',  // color for open/positive items
+  caution: '#A16207',   // color for items that need attention
+  critical: '#ef4444',  // color for closed/blocked items
+  neutral: '#6b7280',   // color for muted text and borders
 };
 ```
+
+The rest of the site — light mode, dark mode, borders, badges, and the favicon — updates automatically to match.
+
+Want more control? The same file also has optional overrides, commented out by default:
+
+- `accent` — a second color for playful highlights, like the persona badge
+- `surface` — the background color for light mode
+- `ink` — the main text color for light mode
 
 ---
 
