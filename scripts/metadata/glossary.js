@@ -128,6 +128,29 @@ const GLOSSARY_CONTENT = {
         },
       ],
     },
+    {
+      id: 'highlights',
+      title: 'Highlights',
+      description:
+        'A hand-picked selection of best work.',
+      items: [
+        {
+          id: 'highlightEntry',
+          title: 'Highlight',
+          description:
+            'A manually added entry — an award, a project, a talk, or anything else worth featuring — along with the story behind it.',
+          source:
+            'Added by editing `data/highlights.json` directly. Unlike the rest of the portfolio, highlights are not fetched automatically.',
+        },
+        {
+          id: 'highlightType',
+          title: 'Type & Icon',
+          description:
+            'The label and emoji shown on each highlight card, such as "🏆 Award" or "🛠 Project".',
+          source: 'Picked from a predefined list, or set freely with a custom `type` and `icon`.',
+        },
+      ],
+    },
   ],
 };
 
