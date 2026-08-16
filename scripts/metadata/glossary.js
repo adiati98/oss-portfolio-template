@@ -3,7 +3,7 @@
  */
 const GLOSSARY_CONTENT = {
   title: 'Glossary',
-  subtitle: `A comprehensive explanation of the terms and categories used to track open source impact, detailing how contribution data is collected, sorted, and calculated within Open Source Portfolio.`,
+  subtitle: `The terms used across this portfolio and how it's worked out from the underlying GitHub activity.`,
 
   sections: [
     {
@@ -131,8 +131,7 @@ const GLOSSARY_CONTENT = {
     {
       id: 'highlights',
       title: 'Highlights',
-      description:
-        'A hand-picked selection of best work.',
+      description: 'A hand-picked selection of best work.',
       items: [
         {
           id: 'highlightEntry',

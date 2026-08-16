@@ -96,10 +96,9 @@ async function createHighlightsHtml() {
       ${navHtml}
       <main id="main" class="grow w-full">
         <div class="px-6 sm:px-12 lg:px-16 xl:px-32 py-10">
-          <div class="max-w-4xl mx-auto">
+          <div class="max-w-7xl mx-auto">
             <header class="mt-16 mb-16">
-              <p class="page-eyebrow">${highlights.length} open source highlight${highlights.length === 1 ? '' : 's'}</p>
-              <h1 style="color: var(--t-brand);" class="text-4xl sm:text-6xl font-black mt-2 mb-6">Highlights</h1>
+              <h1 style="color: var(--t-brand);" class="text-4xl sm:text-6xl font-black mb-6">Highlights</h1>
               <p class="text-xl max-w-2xl leading-relaxed" style="color: var(--t-ink-2);">
                 A selection of top open source contributions, key projects, and meaningful moments — along with the stories behind them.
               </p>
