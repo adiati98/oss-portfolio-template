@@ -13,12 +13,16 @@ const { groupContributionsByQuarter } = require('../utils/contributions-groupers
 // Import markdown generation logic
 const { writeMarkdownFiles } = require('../generators/markdown/quarterly-reports-generator');
 const { createStatsReadme } = require('../generators/markdown/contributions-readme-generator');
+const {
+  createHighlightsMarkdown,
+} = require('../generators/markdown/highlights-markdown-generator');
 
 // Import html generation logic
 const { writeHtmlFiles } = require('../generators/html/quarterly-reports-html-generator');
 const { createHtmlReports } = require('../generators/html/contributions-report-html-generator');
 const { createIndexHtml } = require('../generators/html/landing-page-html-generator');
 const { createGlossaryHtml } = require('../generators/html/glossary-html-generator');
+const { createHighlightsHtml } = require('../generators/html/highlights-html-generator');
 
 async function main() {
   const dataDir = 'data';
@@ -199,9 +203,11 @@ async function main() {
     await writeMarkdownFiles(grouped);
     const quarterlyHtmlLinks = await writeHtmlFiles(grouped);
     await createStatsReadme(finalContributions);
+    await createHighlightsMarkdown();
     await createIndexHtml(finalContributions);
     await createHtmlReports(quarterlyHtmlLinks);
     await createGlossaryHtml();
+    await createHighlightsHtml();
 
     // Cache persistence
     await fs.writeFile(cacheFile, JSON.stringify(Array.from(updatedPrCache)), 'utf8');

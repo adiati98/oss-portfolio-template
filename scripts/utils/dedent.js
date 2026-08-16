@@ -8,7 +8,9 @@
  */
 function dedent(callSite, ...substitutions) {
   // 1. Convert the first argument (string array) into a single string.
-  let text = callSite.map((s, i) => s + (substitutions[i] || '')).join('');
+  let text = callSite
+    .map((s, i) => s + (substitutions[i] !== undefined ? substitutions[i] : ''))
+    .join('');
 
   // 2. Split the string into lines, excluding lines that are just whitespace.
   const lines = text.split('\n');

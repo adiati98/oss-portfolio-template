@@ -72,19 +72,28 @@ jobs:
           fi
 
       - name: Carry data forward from the current demo branch
-        if: steps.mode.outputs.mode == 'daily'
         run: |
           # A daily run is only cheap because the script can see what it already
-          # knows. Without this, every run would re-fetch the full history.
+          # knows, so the whole cache comes along. data/highlights.json is
+          # hand-curated content, not cache — it survives every mode, full
+          # sync included.
           if git fetch --depth=1 origin demo; then
-            git checkout FETCH_HEAD -- data/ && echo "Restored data/ from demo."
+            if [ "${{ steps.mode.outputs.mode }}" = "daily" ]; then
+              git checkout FETCH_HEAD -- data/ && echo "Restored data/ from demo."
+            else
+              git checkout FETCH_HEAD -- data/highlights.json 2>/dev/null &&
+                echo "Restored data/highlights.json from demo." ||
+                echo "No data/highlights.json on demo yet."
+            fi
           else
             echo "No demo branch yet — this run will fetch from scratch."
           fi
 
-      - name: Clear data for a full rebuild
+      - name: Clear cache for a full rebuild
         if: steps.mode.outputs.mode == 'full'
-        run: rm -f data/*.json
+        # -not -name excludes highlights.json: it's curated content, not
+        # cache, and a full sync shouldn't wipe it.
+        run: find data -maxdepth 1 -name '*.json' -not -name 'highlights.json' -delete
 
       - name: Point the demo at the showcase account
         run: |

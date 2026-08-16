@@ -60,6 +60,10 @@ function createNavHtml(relativePath = './') {
 
         <div class="flex items-center">
           <div class="hidden min-[1025px]:flex items-center space-x-3">
+            <a href="${base}highlights.html" style="background-color: ${COLORS.primary[10]};"
+              class="nav-link nav-desktop-link text-sm font-semibold p-2 rounded-md">Highlights
+            </a>
+
             <a href="${base}reports.html" style="background-color: ${COLORS.primary[10]};"
               class="nav-link nav-desktop-link text-sm font-semibold p-2 rounded-md">Quarterly Reports
             </a>
@@ -88,6 +92,9 @@ function createNavHtml(relativePath = './') {
 
       <div id="mobile-menu" style="background-color: ${COLORS.nav.bgDark};" class="hidden min-[1025px]:hidden absolute top-16 left-0 right-0 shadow-lg p-4">
         <div class="flex flex-col space-y-2">
+          <a href="${base}highlights.html"
+            class="nav-link nav-mobile-link block px-3 py-2 text-base font-medium rounded-md">Highlights</a>
+
           <a href="${base}reports.html"
             class="nav-link nav-mobile-link block px-3 py-2 text-base font-medium rounded-md">Quarterly Reports</a>
 
@@ -349,6 +356,7 @@ function getBackToTopScript() {
 }
 
 const SHARED_CHROME_CSS = `
+  .page-eyebrow{font-family:ui-monospace,monospace;font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--t-ink-3)}
   .skip-link{position:absolute;left:10px;top:-52px;z-index:100;background:var(--t-card);color:var(--t-ink);
     border:1px solid var(--t-line);border-radius:8px;padding:9px 16px;font-size:.85rem;font-weight:600;
     text-decoration:none;transition:top .15s ease}

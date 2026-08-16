@@ -35,6 +35,7 @@ const { createFooterHtml } = require('../../components/footer');
 const { PERSONA_CATEGORIES, DEFAULT_PERSONA } = require('../../metadata/personas');
 const { FAVICON_SVG_ENCODED, THEME_CSS_VARS } = require('../../config/constants');
 const { getThemeInitScript, getThemeStyleVariant } = require('../../components/theme-init');
+const { loadHighlights } = require('../../utils/highlights-loader');
 
 const htmlBaseDir = path.join(BASE_DIR, 'html-generated');
 const HTML_OUTPUT_PATH = path.join(htmlBaseDir, 'index.html');
@@ -121,6 +122,16 @@ const LANDING_CSS = `
     .lp-idx span:first-of-type{padding:2px 0;margin-left:2px}
   }
   .lp-empty{font-size:.85rem;color:var(--t-ink-3);font-style:italic}
+  .lp-teaser{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+    margin-top:16px;padding:14px 18px;border:1px solid var(--t-brand-line);border-radius:12px;
+    background:var(--t-brand-wash);text-decoration:none}
+  .lp-teaser-label{font-family:ui-monospace,monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--t-brand);margin:0 0 3px}
+  .lp-teaser p{margin:0;font-size:.88rem;color:var(--t-ink-2)}
+  .lp-teaser .go{flex:0 0 auto;font-weight:700;font-size:.85rem;color:var(--t-brand);white-space:nowrap;
+    transition:transform .18s ease}
+  .lp-teaser:hover .go{transform:translateX(3px)}
+  @media (prefers-reduced-motion: reduce){.lp-teaser .go{transition:none}}
 `;
 
 /** The other pages this fork ships, in the order the index row lists them. */
@@ -187,7 +198,13 @@ function renderHero() {
  * (grand total, impacted repos, yearly average, active since), plus a live
  * "Last contribution" indicator derived from the same contribution dates.
  */
-function renderImpact({ grandTotal, earliestYear, totalUniqueRepos, yearlyAverage, latestContributionIso }) {
+function renderImpact({
+  grandTotal,
+  earliestYear,
+  totalUniqueRepos,
+  yearlyAverage,
+  latestContributionIso,
+}) {
   const contribDate = latestContributionIso ? new Date(latestContributionIso) : null;
   const hasContrib = contribDate && !isNaN(contribDate.getTime());
   const contribIso = hasContrib ? contribDate.toISOString() : '';
@@ -291,6 +308,21 @@ function renderPersona(personaTitle, personaDesc) {
   `;
 }
 
+/** Compact link to highlights.html — the full reel lives on its own page. */
+function renderHighlightsTeaser(highlights) {
+  if (highlights.length === 0) return '';
+
+  return dedent`
+    <a class="lp-teaser" href="highlights.html">
+      <div>
+        <p class="lp-teaser-label">Featured Work</p>
+        <p>${highlights.length} open source highlight${highlights.length === 1 ? '' : 's'}, with the story behind each.</p>
+      </div>
+      <span class="go" aria-hidden="true">See Highlights →</span>
+    </a>
+  `;
+}
+
 function renderIndexRow() {
   return PAGE_INDEX.map(
     (page) => dedent`
@@ -385,6 +417,7 @@ async function createIndexHtml(finalContributions = {}, articles = []) {
   const chosenPersona = determinePersona(countsDict);
   const { title: personaTitle, desc: personaDesc } = chosenPersona;
 
+  const highlights = loadHighlights();
   const navHtml = createNavHtml('./');
   const footerHtml = createFooterHtml();
 
@@ -409,6 +442,7 @@ async function createIndexHtml(finalContributions = {}, articles = []) {
           <div class="max-w-6xl mx-auto">
             <div class="mt-16">
               ${renderHero()}
+              ${renderHighlightsTeaser(highlights)}
             </div>
 
             ${renderImpact({

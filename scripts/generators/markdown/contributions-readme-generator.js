@@ -5,10 +5,12 @@ const path = require('path');
 const { BASE_DIR, GITHUB_USERNAME } = require('../../config/config');
 const { PERSONA_CATEGORIES, DEFAULT_PERSONA } = require('../../metadata/personas');
 const { GLOSSARY_CONTENT } = require('../../metadata/glossary');
+const { loadHighlights } = require('../../utils/highlights-loader');
 
 const MARKDOWN_OUTPUT_DIR_NAME = 'markdown-generated';
 const MARKDOWN_README_FILENAME = 'README.md';
 const MARKDOWN_GLOSSARY_FILENAME = 'glossary.md';
+const MARKDOWN_HIGHLIGHTS_FILENAME = 'highlights.md';
 
 /**
  * Determines persona based on metadata and counts.
@@ -154,6 +156,12 @@ async function createStatsReadme(finalContributions) {
   const yearsTracked = currentYear - earliestYear + 1;
   const generatedAt = now.toLocaleString();
 
+  const highlights = loadHighlights();
+  const highlightsTeaser =
+    highlights.length > 0
+      ? `> ⭐ **[${highlights.length} open source highlight${highlights.length === 1 ? '' : 's'}](./${MARKDOWN_HIGHLIGHTS_FILENAME})** — with the story behind each.\n\n---\n\n`
+      : '';
+
   // 6. Generate Quarterly Links
   let reportLinksContent = '## 📂 Detailed Quarterly Reports\n\n';
   try {
@@ -237,7 +245,7 @@ Organized by year and quarter, these reports track contributions made by **[${GI
 
 ---
 
-## 📊 All-Time Impact Summary
+${highlightsTeaser}## 📊 All-Time Impact Summary
 
 ### 🚀 Total Contributions: **${grandTotal}**
 
