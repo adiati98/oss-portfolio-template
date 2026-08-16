@@ -54,7 +54,24 @@ async function createGlossaryHtml() {
   };
 
   const sections = GLOSSARY_CONTENT.sections || [];
-  const totalTerms = sections.reduce((count, group) => count + (group.items?.length || 0), 0);
+
+  const tocHtml = sections
+    .map((group) => {
+      const subLinksHtml = (group.items || [])
+        .map(
+          (item) => dedent`
+            <a href="#${item.id}" class="glossary-toc-link glossary-toc-sublink">${item.title}</a>
+          `
+        )
+        .join('');
+
+      return dedent`
+        <a href="#${group.id}" class="glossary-toc-link">${group.title}</a>
+        ${subLinksHtml}
+      `;
+    })
+    .join('');
+
   const metricBlocksHtml = sections
     .map((group) => {
       const itemsHtml = group.items
@@ -133,20 +150,27 @@ async function createGlossaryHtml() {
         <div class="px-6 sm:px-12 lg:px-16 xl:px-32 py-10">
           <div class="max-w-7xl mx-auto">
             <header class="mt-16 mb-16">
-              <p class="page-eyebrow">${totalTerms} term${totalTerms === 1 ? '' : 's'} explained</p>
-              <h1 style="color: var(--t-brand);" class="text-4xl sm:text-6xl font-black mt-2 mb-6">
+              <h1 style="color: var(--t-brand);" class="text-4xl sm:text-6xl font-black mb-6">
                 ${GLOSSARY_CONTENT.title}
               </h1>
               <p class="text-xl max-w-2xl leading-relaxed" style="color: var(--t-ink-2);">
                 ${processText(GLOSSARY_CONTENT.subtitle)}
               </p>
             </header>
-            <div class="max-w-[90ch] mx-auto">
-              <article class="glossary-content">
-                <div class="metrics-container">
-                  ${metricBlocksHtml}
-                </div>
-              </article>
+            <div class="lg:flex lg:items-start lg:gap-12">
+              <aside class="glossary-toc mb-10 lg:mb-0 lg:w-64 lg:flex-shrink-0 lg:sticky lg:top-24 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+                <p class="text-xs font-black uppercase tracking-widest mb-3" style="color: var(--t-ink-3);">
+                  On This Page
+                </p>
+                <nav aria-label="Glossary sections">${tocHtml}</nav>
+              </aside>
+              <div class="max-w-[90ch] lg:flex-1 lg:min-w-0">
+                <article class="glossary-content">
+                  <div class="metrics-container">
+                    ${metricBlocksHtml}
+                  </div>
+                </article>
+              </div>
             </div>
           </div>
         </div>

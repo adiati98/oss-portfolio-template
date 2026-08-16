@@ -420,13 +420,37 @@ function getGlossaryStyleCss() {
       padding: 0;
     }
 
+    .glossary-toc-link {
+      display: block;
+      padding: 0.4rem 0.75rem;
+      margin-bottom: 0.15rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--t-ink-2);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+    }
+
+    .glossary-toc-link:hover {
+      background-color: var(--t-card-2);
+      color: var(--t-ink);
+      border-left-color: var(--t-brand-line);
+    }
+
+    .glossary-toc-sublink {
+      padding-left: 1.5rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
     /* Highlight the section when navigating via URL hash (#) */
     :target {
       background-color: var(--t-brand-wash);
-      border-radius: 1rem;
       transition: background-color 0.5s ease;
       padding: 1rem;
-      margin: -1rem;
+      margin-left: -1rem;
+      margin-right: -1rem;
       scroll-margin-top: 100px;
     }
 

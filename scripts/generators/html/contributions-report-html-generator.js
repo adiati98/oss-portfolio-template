@@ -144,11 +144,10 @@ async function createHtmlReports(quarterlyFileLinks = []) {
 ${createSkipToContentHtml('main')}
 ${navHtml}
   <main id="main" class="grow w-full">
-    <div class="px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-24 py-6 sm:py-10">
-      <div class="max-w-[120ch] mx-auto">
+    <div class="px-6 sm:px-12 lg:px-16 xl:px-32 py-10">
+      <div class="max-w-7xl mx-auto">
         <header class="mt-16 mb-16">
-          <p class="page-eyebrow">${sortedLinks.length} quarterly report${sortedLinks.length === 1 ? '' : 's'}</p>
-          <h1 style="color: var(--t-brand);" class="text-4xl sm:text-6xl font-black mt-2 mb-6">
+          <h1 style="color: var(--t-brand);" class="text-4xl sm:text-6xl font-black mb-6">
             Quarterly Reports
           </h1>
           <p style="color: var(--t-ink-2);" class="text-xl max-w-2xl leading-relaxed">
