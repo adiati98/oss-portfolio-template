@@ -356,6 +356,7 @@ function getBackToTopScript() {
 }
 
 const SHARED_CHROME_CSS = `
+  .page-eyebrow{font-family:ui-monospace,monospace;font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--t-ink-3)}
   .skip-link{position:absolute;left:10px;top:-52px;z-index:100;background:var(--t-card);color:var(--t-ink);
     border:1px solid var(--t-line);border-radius:8px;padding:9px 16px;font-size:.85rem;font-weight:600;
     text-decoration:none;transition:top .15s ease}

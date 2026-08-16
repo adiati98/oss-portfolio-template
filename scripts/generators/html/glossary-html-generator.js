@@ -54,6 +54,7 @@ async function createGlossaryHtml() {
   };
 
   const sections = GLOSSARY_CONTENT.sections || [];
+  const totalTerms = sections.reduce((count, group) => count + (group.items?.length || 0), 0);
   const metricBlocksHtml = sections
     .map((group) => {
       const itemsHtml = group.items
@@ -131,11 +132,12 @@ async function createGlossaryHtml() {
       <main id="main" class="grow w-full">
         <div class="px-6 sm:px-12 lg:px-16 xl:px-32 py-10">
           <div class="max-w-7xl mx-auto">
-            <header style="border-bottom-color: var(--t-brand-line);" class="text-center mt-16 mb-16 pb-12 border-b-2">
-              <h1 style="color: var(--t-brand);" class="text-4xl sm:text-6xl font-black mb-6 pt-8">
+            <header class="mt-16 mb-16">
+              <p class="page-eyebrow">${totalTerms} term${totalTerms === 1 ? '' : 's'} explained</p>
+              <h1 style="color: var(--t-brand);" class="text-4xl sm:text-6xl font-black mt-2 mb-6">
                 ${GLOSSARY_CONTENT.title}
               </h1>
-              <p class="text-xl max-w-3xl mx-auto leading-relaxed" style="color: var(--t-ink-2);">
+              <p class="text-xl max-w-2xl leading-relaxed" style="color: var(--t-ink-2);">
                 ${processText(GLOSSARY_CONTENT.subtitle)}
               </p>
             </header>

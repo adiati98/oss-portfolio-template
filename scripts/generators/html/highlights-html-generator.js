@@ -27,7 +27,6 @@ const { tagForHighlightType } = require('../../metadata/highlight-types');
 
 const HIGHLIGHTS_CSS = `
   ${THEME_CSS_VARS}
-  .hl-eyebrow{font-family:ui-monospace,monospace;font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--t-ink-3)}
   .hl-list{position:relative;padding-left:22px;max-width:70ch}
   .hl-list::before{content:"";position:absolute;left:5px;top:6px;bottom:6px;width:2px;border-radius:2px;
     background:linear-gradient(var(--t-brand-line),var(--t-line))}
@@ -99,9 +98,9 @@ async function createHighlightsHtml() {
         <div class="px-6 sm:px-12 lg:px-16 xl:px-32 py-10">
           <div class="max-w-4xl mx-auto">
             <header class="mt-16 mb-16">
-              <p class="hl-eyebrow">${highlights.length} open source highlight${highlights.length === 1 ? '' : 's'}</p>
+              <p class="page-eyebrow">${highlights.length} open source highlight${highlights.length === 1 ? '' : 's'}</p>
               <h1 style="color: var(--t-brand);" class="text-4xl sm:text-6xl font-black mt-2 mb-6">Highlights</h1>
-              <p class="text-lg max-w-2xl leading-relaxed" style="color: var(--t-ink-2);">
+              <p class="text-xl max-w-2xl leading-relaxed" style="color: var(--t-ink-2);">
                 A selection of top open source contributions, key projects, and meaningful moments — along with the stories behind them.
               </p>
             </header>
