@@ -36,6 +36,15 @@ _Terms used inside individual reports to explain work done during a specific thr
 | **Co-Authored PRs**      | A record of PRs where contributions were made directly to the code alongside other developers.             | Identifies credit via co-author commit information. The **Commit Period** spans from the creation of the PR to the first code contribution to indicate when the collaboration started. The **Status** and **Last Update** columns track the current state and the most recent activity. |
 | **Collaborations**       | A record of participation in discussions within issues or PRs authored by others in external repositories. | Tracks comments on PRs and issues unless or until they are officially reviewed.                                                                                                                                                                                                         |
 
+## Highlights
+
+_A hand-picked selection of best work._
+
+| Metric          | Description                                                                                                              | Data Source                                                                                                                   |
+| :-------------- | :----------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------- |
+| **Highlight**   | A manually added entry — an award, a project, a talk, or anything else worth featuring — along with the story behind it. | Added by editing `data/highlights.json` directly. Unlike the rest of the portfolio, highlights are not fetched automatically. |
+| **Type & Icon** | The label and emoji shown on each highlight card, such as "🏆 Award" or "🛠 Project".                                    | Picked from a predefined list, or set freely with a custom `type` and `icon`.                                                 |
+
 ---
 
-[← Back to Summary](./README.md) | _Last updated: 8/15/2026, 2:15:39 AM_
+[← Back to Summary](./README.md) | _Last updated: 8/16/2026, 7:10:27 PM_

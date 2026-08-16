@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Glossary | your-github-username OSS Portfolio</title>
+    <title>Highlights | your-github-username OSS Portfolio</title>
     <link
       rel="icon"
       type="image/svg+xml"
@@ -37,7 +37,6 @@
       @custom-variant dark (&:where(.dark, .dark *));
     </style>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
       :root {
         --c-primary-hex: #4338ca;
         --c-primary-rgb: rgb(67, 56, 202);
@@ -294,125 +293,95 @@
         --t-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 18px rgba(0, 0, 0, 0.3);
         --t-shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.4), 0 22px 60px -22px rgba(0, 0, 0, 0.6);
       }
-      html,
-      body {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-        max-width: 100%;
-      }
-      body {
-        /* overflow-x/position live on body, not html — overflow on the root
-         element is a well-documented trigger for browsers (notably iOS
-         Safari) to stop treating the viewport as the containing block for
-         position:fixed descendants, which silently breaks the back-to-top
-         button on every page built from this base CSS. */
-        overflow-x: hidden;
+      .hl-list {
         position: relative;
-        font-family: 'Inter', sans-serif;
-        min-height: 10vh;
-        display: flex;
-        flex-direction: column;
+        padding-left: 22px;
+        max-width: 70ch;
       }
-
-      /* Navigation Buttons */
-      .nav-report-button {
-        border: 1px solid var(--t-line) !important;
-        transition: border-color 0.15s ease-in-out !important;
+      .hl-list::before {
+        content: '';
+        position: absolute;
+        left: 5px;
+        top: 6px;
+        bottom: 6px;
+        width: 2px;
+        border-radius: 2px;
+        background: linear-gradient(var(--t-brand-line), var(--t-line));
       }
-      .nav-report-button:hover {
-        border-color: var(--t-brand) !important;
+      .hl-card {
+        position: relative;
+        padding: 0 0 34px 20px;
       }
-      .nav-report-button:focus-visible {
-        border-color: var(--t-brand);
-        outline: 2px solid var(--t-brand);
-        outline-offset: 2px;
+      .hl-card:last-child {
+        padding-bottom: 0;
       }
-
-      .nav-contribution-button {
-        border: 1px solid var(--t-line) !important;
-        transition: border-color 0.15s ease-in-out !important;
+      .hl-card::before {
+        content: '';
+        position: absolute;
+        left: -24.5px;
+        top: 6px;
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--t-brand);
+        border: 2.5px solid var(--t-card);
       }
-      .nav-contribution-button:hover {
-        border-color: var(--t-brand) !important;
-      }
-      .nav-contribution-button:focus-visible {
-        border-color: var(--t-brand);
-        outline: 2px solid var(--t-brand);
-        outline-offset: 2px;
-      }
-
-      /* Breakdown Icon Wrapper */
-      .breakdown-icon-wrapper {
+      .hl-tag {
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-        vertical-align: middle;
-        width: 1rem; /* default 16px */
-        height: 1rem;
-      }
-      .breakdown-icon-wrapper svg {
-        width: 100% !important;
-        height: 100% !important;
-        display: block;
-      }
-
-      /* Breakdown Label text scaling */
-      .breakdown-label {
-        font-size: 0.875rem; /* default sm */
-        font-weight: 500;
-        white-space: nowrap;
-      }
-
-      /* Small Screen Adjustments for Breakdown Section */
-      @media (max-width: 400px) {
-        .breakdown-icon-wrapper {
-          width: 0.75rem; /* shrinks to 12px */
-          height: 0.75rem;
-        }
-        .breakdown-label {
-          font-size: 0.75rem !important;
-        }
-      }
-
-      .glossary-content {
-        line-height: 1.8;
-      }
-
-      /* The Block Code Look */
-      .glossary-code-block {
-        display: block;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-        background-color: var(--t-card-2);
+        gap: 4px;
+        font-family: ui-monospace, monospace;
+        font-size: 0.75rem;
+        color: var(--t-accent);
+        background: var(--t-card-2);
         border: 1px solid var(--t-line);
+        border-radius: 999px;
+        padding: 2px 10px;
+        margin-bottom: 8px;
+      }
+      .hl-title {
+        font-size: 1.2rem;
+        font-weight: 800;
+        margin: 0 0 4px;
+        line-height: 1.32;
+      }
+      .hl-title a {
+        color: var(--t-ink);
+        text-decoration: none;
+      }
+      .hl-title a:hover {
+        color: var(--t-brand);
+      }
+      .hl-org {
+        font-family: ui-monospace, monospace;
+        font-size: 0.78rem;
+        letter-spacing: 0.03em;
+        color: var(--t-ink-3);
+        margin-bottom: 10px;
+      }
+      .hl-desc {
+        font-size: 0.92rem;
+        color: var(--t-ink-2);
+        line-height: 1.6;
+        max-width: 60ch;
+      }
+      .hl-empty-state {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 240px;
+        border: 2px dashed var(--t-brand-line);
+        border-radius: 12px;
+        background: var(--t-brand-wash);
+        padding: 3rem 2rem;
+        text-align: center;
+      }
+      .hl-empty-state p {
+        margin: 0;
+        font-size: 0.95rem;
+        color: var(--t-ink-2);
       }
 
-      /* Target the text inside to ensure monospace inheritance */
-      .glossary-code-block .text-sm {
-        font-family: inherit;
-      }
-
-      /* Bold text: Clean, high-contrast, no background color */
-      .glossary-content strong {
-        color: var(--t-brand-strong);
-        font-weight: 900;
-        background-color: transparent !important;
-        padding: 0;
-      }
-
-      /* Highlight the section when navigating via URL hash (#) */
-      :target {
-        background-color: var(--t-brand-wash);
-        border-radius: 1rem;
-        transition: background-color 0.5s ease;
-        padding: 1rem;
-        margin: -1rem;
-        scroll-margin-top: 100px;
-      }
-
-      :target h3 {
-        color: var(--t-brand) !important;
-      }
       .page-eyebrow {
         font-family: ui-monospace, monospace;
         font-size: 0.75rem;
@@ -1136,500 +1105,18 @@
     </style>
     <main id="main" class="grow w-full">
       <div class="px-6 sm:px-12 lg:px-16 xl:px-32 py-10">
-        <div class="max-w-7xl mx-auto">
+        <div class="max-w-4xl mx-auto">
           <header class="mt-16 mb-16">
-            <p class="page-eyebrow">15 terms explained</p>
+            <p class="page-eyebrow">0 open source highlights</p>
             <h1 style="color: var(--t-brand)" class="text-4xl sm:text-6xl font-black mt-2 mb-6">
-              Glossary
+              Highlights
             </h1>
             <p class="text-xl max-w-2xl leading-relaxed" style="color: var(--t-ink-2)">
-              A comprehensive explanation of the terms and categories used to track open source
-              impact, detailing how contribution data is collected, sorted, and calculated within
-              Open Source Portfolio.
+              A selection of top open source contributions, key projects, and meaningful moments —
+              along with the stories behind them.
             </p>
           </header>
-          <div class="max-w-[90ch] mx-auto">
-            <article class="glossary-content">
-              <div class="metrics-container">
-                <section id="portfolioWide" class="mb-24 last:mb-0">
-                  <div class="mb-10">
-                    <h2 style="color: var(--t-brand)" class="text-3xl sm:text-4xl font-black mb-2">
-                      Portfolio-wide Metrics
-                    </h2>
-                    <p class="text-lg font-medium italic" style="color: var(--t-ink-2)">
-                      Terms used on the main page and README to show the total work done across the
-                      full span of open source activity.
-                    </p>
-                  </div>
-                  <div class="space-y-2">
-                    <div id="totalImpact" class="mb-16 last:mb-0">
-                      <h3
-                        style="color: var(--t-brand); border-bottom: 2px solid var(--t-brand-line)"
-                        class="text-xl font-extrabold mb-6 pb-2 inline-block"
-                      >
-                        Total Impact
-                      </h3>
-
-                      <div class="space-y-6">
-                        <p class="text-lg leading-relaxed" style="color: var(--t-ink-2)">
-                          The total number of all recorded contributions since the very first
-                          activity on GitHub.
-                        </p>
-
-                        <div class="glossary-code-block p-6 overflow-x-auto rounded-2xl">
-                          <span
-                            class="block text-xs uppercase tracking-widest mb-3 font-black font-mono"
-                            style="color: var(--t-ink-3)"
-                          >
-                            Calculation Logic
-                          </span>
-                          <div class="text-sm leading-relaxed" style="color: var(--t-brand-strong)">
-                            Adds the grand total of merged PRs, issues, reviewed PRs, co-authored
-                            PRs, and community collaborations.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div id="activeSince" class="mb-16 last:mb-0">
-                      <h3
-                        style="color: var(--t-brand); border-bottom: 2px solid var(--t-brand-line)"
-                        class="text-xl font-extrabold mb-6 pb-2 inline-block"
-                      >
-                        Active Since
-                      </h3>
-
-                      <div class="space-y-6">
-                        <p class="text-lg leading-relaxed" style="color: var(--t-ink-2)">
-                          The year of the first recorded contribution found on GitHub.
-                        </p>
-
-                        <div class="glossary-code-block p-6 overflow-x-auto rounded-2xl">
-                          <span
-                            class="block text-xs uppercase tracking-widest mb-3 font-black font-mono"
-                            style="color: var(--t-ink-3)"
-                          >
-                            Calculation Logic
-                          </span>
-                          <div class="text-sm leading-relaxed" style="color: var(--t-brand-strong)">
-                            Identifies the date of the very first contribution found in the data to
-                            set the starting point for the history.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div id="totalImpactedRepos" class="mb-16 last:mb-0">
-                      <h3
-                        style="color: var(--t-brand); border-bottom: 2px solid var(--t-brand-line)"
-                        class="text-xl font-extrabold mb-6 pb-2 inline-block"
-                      >
-                        Impacted Repos
-                      </h3>
-
-                      <div class="space-y-6">
-                        <p class="text-lg leading-relaxed" style="color: var(--t-ink-2)">
-                          The total number of open source projects with at least one contribution.
-                        </p>
-
-                        <div class="glossary-code-block p-6 overflow-x-auto rounded-2xl">
-                          <span
-                            class="block text-xs uppercase tracking-widest mb-3 font-black font-mono"
-                            style="color: var(--t-ink-3)"
-                          >
-                            Calculation Logic
-                          </span>
-                          <div class="text-sm leading-relaxed" style="color: var(--t-brand-strong)">
-                            Identifies every unique external repository containing at least one
-                            recorded contribution.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div id="primaryFocusProjects" class="mb-16 last:mb-0">
-                      <h3
-                        style="color: var(--t-brand); border-bottom: 2px solid var(--t-brand-line)"
-                        class="text-xl font-extrabold mb-6 pb-2 inline-block"
-                      >
-                        Primary Focus Projects
-                      </h3>
-
-                      <div class="space-y-6">
-                        <p class="text-lg leading-relaxed" style="color: var(--t-ink-2)">
-                          The top three repositories where the highest contributions have occurred
-                          since the first year of contribution.
-                        </p>
-
-                        <div class="glossary-code-block p-6 overflow-x-auto rounded-2xl">
-                          <span
-                            class="block text-xs uppercase tracking-widest mb-3 font-black font-mono"
-                            style="color: var(--t-ink-3)"
-                          >
-                            Calculation Logic
-                          </span>
-                          <div class="text-sm leading-relaxed" style="color: var(--t-brand-strong)">
-                            Ranks all tracked repositories by lifetime contribution volume and
-                            selects the top three.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div id="persona" class="mb-16 last:mb-0">
-                      <h3
-                        style="color: var(--t-brand); border-bottom: 2px solid var(--t-brand-line)"
-                        class="text-xl font-extrabold mb-6 pb-2 inline-block"
-                      >
-                        Collaboration Profile
-                      </h3>
-
-                      <div class="space-y-6">
-                        <p class="text-lg leading-relaxed" style="color: var(--t-ink-2)">
-                          A role assigned based on the primary way of contributing to the community.
-                        </p>
-
-                        <div class="glossary-code-block p-6 overflow-x-auto rounded-2xl">
-                          <span
-                            class="block text-xs uppercase tracking-widest mb-3 font-black font-mono"
-                            style="color: var(--t-ink-3)"
-                          >
-                            Calculation Logic
-                          </span>
-                          <div class="text-sm leading-relaxed" style="color: var(--t-brand-strong)">
-                            Analyzes contribution frequency across all categories to assign a role,
-                            such as "Community Mentor" for high review volumes.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-                <section id="quarterlyReports" class="mb-24 last:mb-0">
-                  <div class="mb-10">
-                    <h2 style="color: var(--t-brand)" class="text-3xl sm:text-4xl font-black mb-2">
-                      Quarterly Reports
-                    </h2>
-                    <p class="text-lg font-medium italic" style="color: var(--t-ink-2)">
-                      How the data is organized into quarters to make it easy to find and read.
-                    </p>
-                  </div>
-                  <div class="space-y-2">
-                    <div id="reportsIndex" class="mb-16 last:mb-0">
-                      <h3
-                        style="color: var(--t-brand); border-bottom: 2px solid var(--t-brand-line)"
-                        class="text-xl font-extrabold mb-6 pb-2 inline-block"
-                      >
-                        Reports Index
-                      </h3>
-
-                      <div class="space-y-6">
-                        <p class="text-lg leading-relaxed" style="color: var(--t-ink-2)">
-                          The main list of the portfolio. It organizes all work into separate pages
-                          grouped by year and three-month periods (quarters).
-                        </p>
-
-                        <div class="glossary-code-block p-6 overflow-x-auto rounded-2xl">
-                          <span
-                            class="block text-xs uppercase tracking-widest mb-3 font-black font-mono"
-                            style="color: var(--t-ink-3)"
-                          >
-                            Data Source
-                          </span>
-                          <div class="text-sm leading-relaxed" style="color: var(--t-brand-strong)">
-                            The <strong>Quarterly Reports</strong> page works like a folder,
-                            displaying the total contributions for each year and its corresponding
-                            three-month periods.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-                <section id="quarterlyMetrics" class="mb-24 last:mb-0">
-                  <div class="mb-10">
-                    <h2 style="color: var(--t-brand)" class="text-3xl sm:text-4xl font-black mb-2">
-                      Quarterly Report Metrics
-                    </h2>
-                    <p class="text-lg font-medium italic" style="color: var(--t-ink-2)">
-                      Terms used inside individual reports to explain work done during a specific
-                      three-month window.
-                    </p>
-                  </div>
-                  <div class="space-y-2">
-                    <div id="stats" class="mb-16 last:mb-0">
-                      <h3
-                        style="color: var(--t-brand); border-bottom: 2px solid var(--t-brand-line)"
-                        class="text-xl font-extrabold mb-6 pb-2 inline-block"
-                      >
-                        Quarterly Statistics
-                      </h3>
-
-                      <div class="space-y-6">
-                        <p class="text-lg leading-relaxed" style="color: var(--t-ink-2)">
-                          A summary that shows the total work and the projects involved during a
-                          specific three-month period.
-                        </p>
-
-                        <div class="glossary-code-block p-6 overflow-x-auto rounded-2xl">
-                          <span
-                            class="block text-xs uppercase tracking-widest mb-3 font-black font-mono"
-                            style="color: var(--t-ink-3)"
-                          >
-                            Calculation Logic
-                          </span>
-                          <div class="text-sm leading-relaxed" style="color: var(--t-brand-strong)">
-                            Aggregates all contribution types and unique repositories involved
-                            within a specific three-month window.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div id="focusProjects" class="mb-16 last:mb-0">
-                      <h3
-                        style="color: var(--t-brand); border-bottom: 2px solid var(--t-brand-line)"
-                        class="text-xl font-extrabold mb-6 pb-2 inline-block"
-                      >
-                        Top 3 Repositories
-                      </h3>
-
-                      <div class="space-y-6">
-                        <p class="text-lg leading-relaxed" style="color: var(--t-ink-2)">
-                          The projects that received the most work and attention within each
-                          quarter.
-                        </p>
-
-                        <div class="glossary-code-block p-6 overflow-x-auto rounded-2xl">
-                          <span
-                            class="block text-xs uppercase tracking-widest mb-3 font-black font-mono"
-                            style="color: var(--t-ink-3)"
-                          >
-                            Calculation Logic
-                          </span>
-                          <div class="text-sm leading-relaxed" style="color: var(--t-brand-strong)">
-                            Ranks repositories by the volume of contributions performed during the
-                            quarter.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div id="merged" class="mb-16 last:mb-0">
-                      <h3
-                        style="color: var(--t-brand); border-bottom: 2px solid var(--t-brand-line)"
-                        class="text-xl font-extrabold mb-6 pb-2 inline-block"
-                      >
-                        Merged PRs
-                      </h3>
-
-                      <div class="space-y-6">
-                        <p class="text-lg leading-relaxed" style="color: var(--t-ink-2)">
-                          A record of PRs that were accepted and added to external repositories.
-                        </p>
-
-                        <div class="glossary-code-block p-6 overflow-x-auto rounded-2xl">
-                          <span
-                            class="block text-xs uppercase tracking-widest mb-3 font-black font-mono"
-                            style="color: var(--t-ink-3)"
-                          >
-                            Calculation Logic
-                          </span>
-                          <div class="text-sm leading-relaxed" style="color: var(--t-brand-strong)">
-                            Identifies PRs with a merged status and calculates the
-                            <strong>Review Period</strong> as the time from the first proposal to
-                            final acceptance.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div id="issues" class="mb-16 last:mb-0">
-                      <h3
-                        style="color: var(--t-brand); border-bottom: 2px solid var(--t-brand-line)"
-                        class="text-xl font-extrabold mb-6 pb-2 inline-block"
-                      >
-                        Issues
-                      </h3>
-
-                      <div class="space-y-6">
-                        <p class="text-lg leading-relaxed" style="color: var(--t-ink-2)">
-                          A record of technical discoveries, bug reports, and feature proposals
-                          created on external repositories.
-                        </p>
-
-                        <div class="glossary-code-block p-6 overflow-x-auto rounded-2xl">
-                          <span
-                            class="block text-xs uppercase tracking-widest mb-3 font-black font-mono"
-                            style="color: var(--t-ink-3)"
-                          >
-                            Calculation Logic
-                          </span>
-                          <div class="text-sm leading-relaxed" style="color: var(--t-brand-strong)">
-                            Collects all authored issues regardless of assignment. It calculates the
-                            <strong>Closing Period</strong> as the time from the initial opening
-                            until the issue is finished.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div id="reviewed" class="mb-16 last:mb-0">
-                      <h3
-                        style="color: var(--t-brand); border-bottom: 2px solid var(--t-brand-line)"
-                        class="text-xl font-extrabold mb-6 pb-2 inline-block"
-                      >
-                        Reviewed PRs
-                      </h3>
-
-                      <div class="space-y-6">
-                        <p class="text-lg leading-relaxed" style="color: var(--t-ink-2)">
-                          A record of formal reviews provided on PRs within external repositories.
-                        </p>
-
-                        <div class="glossary-code-block p-6 overflow-x-auto rounded-2xl">
-                          <span
-                            class="block text-xs uppercase tracking-widest mb-3 font-black font-mono"
-                            style="color: var(--t-ink-3)"
-                          >
-                            Calculation Logic
-                          </span>
-                          <div class="text-sm leading-relaxed" style="color: var(--t-brand-strong)">
-                            Measures the <strong>Review Period</strong> from the creation of the PR
-                            to the submission of the formal review, while tracking the
-                            <strong>Status</strong> and <strong>Last Update</strong> columns for the
-                            current state and the most recent activity.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div id="coAuthored" class="mb-16 last:mb-0">
-                      <h3
-                        style="color: var(--t-brand); border-bottom: 2px solid var(--t-brand-line)"
-                        class="text-xl font-extrabold mb-6 pb-2 inline-block"
-                      >
-                        Co-Authored PRs
-                      </h3>
-
-                      <div class="space-y-6">
-                        <p class="text-lg leading-relaxed" style="color: var(--t-ink-2)">
-                          A record of PRs where contributions were made directly to the code
-                          alongside other developers.
-                        </p>
-
-                        <div class="glossary-code-block p-6 overflow-x-auto rounded-2xl">
-                          <span
-                            class="block text-xs uppercase tracking-widest mb-3 font-black font-mono"
-                            style="color: var(--t-ink-3)"
-                          >
-                            Calculation Logic
-                          </span>
-                          <div class="text-sm leading-relaxed" style="color: var(--t-brand-strong)">
-                            Identifies credit via co-author commit information. The
-                            <strong>Commit Period</strong> spans from the creation of the PR to the
-                            first code contribution to indicate when the collaboration started. The
-                            <strong>Status</strong> and <strong>Last Update</strong> columns track
-                            the current state and the most recent activity.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div id="collaborations" class="mb-16 last:mb-0">
-                      <h3
-                        style="color: var(--t-brand); border-bottom: 2px solid var(--t-brand-line)"
-                        class="text-xl font-extrabold mb-6 pb-2 inline-block"
-                      >
-                        Collaborations
-                      </h3>
-
-                      <div class="space-y-6">
-                        <p class="text-lg leading-relaxed" style="color: var(--t-ink-2)">
-                          A record of participation in discussions within issues or PRs authored by
-                          others in external repositories.
-                        </p>
-
-                        <div class="glossary-code-block p-6 overflow-x-auto rounded-2xl">
-                          <span
-                            class="block text-xs uppercase tracking-widest mb-3 font-black font-mono"
-                            style="color: var(--t-ink-3)"
-                          >
-                            Calculation Logic
-                          </span>
-                          <div class="text-sm leading-relaxed" style="color: var(--t-brand-strong)">
-                            Tracks comments on PRs and issues unless or until they are officially
-                            reviewed.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-                <section id="highlights" class="mb-24 last:mb-0">
-                  <div class="mb-10">
-                    <h2 style="color: var(--t-brand)" class="text-3xl sm:text-4xl font-black mb-2">
-                      Highlights
-                    </h2>
-                    <p class="text-lg font-medium italic" style="color: var(--t-ink-2)">
-                      A hand-picked selection of best work.
-                    </p>
-                  </div>
-                  <div class="space-y-2">
-                    <div id="highlightEntry" class="mb-16 last:mb-0">
-                      <h3
-                        style="color: var(--t-brand); border-bottom: 2px solid var(--t-brand-line)"
-                        class="text-xl font-extrabold mb-6 pb-2 inline-block"
-                      >
-                        Highlight
-                      </h3>
-
-                      <div class="space-y-6">
-                        <p class="text-lg leading-relaxed" style="color: var(--t-ink-2)">
-                          A manually added entry — an award, a project, a talk, or anything else
-                          worth featuring — along with the story behind it.
-                        </p>
-
-                        <div class="glossary-code-block p-6 overflow-x-auto rounded-2xl">
-                          <span
-                            class="block text-xs uppercase tracking-widest mb-3 font-black font-mono"
-                            style="color: var(--t-ink-3)"
-                          >
-                            Data Source
-                          </span>
-                          <div class="text-sm leading-relaxed" style="color: var(--t-brand-strong)">
-                            Added by editing
-                            <span class="glossary-inline-code">data/highlights.json</span>
-                            directly. Unlike the rest of the portfolio, highlights are not fetched
-                            automatically.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div id="highlightType" class="mb-16 last:mb-0">
-                      <h3
-                        style="color: var(--t-brand); border-bottom: 2px solid var(--t-brand-line)"
-                        class="text-xl font-extrabold mb-6 pb-2 inline-block"
-                      >
-                        Type & Icon
-                      </h3>
-
-                      <div class="space-y-6">
-                        <p class="text-lg leading-relaxed" style="color: var(--t-ink-2)">
-                          The label and emoji shown on each highlight card, such as "🏆 Award" or
-                          "🛠 Project".
-                        </p>
-
-                        <div class="glossary-code-block p-6 overflow-x-auto rounded-2xl">
-                          <span
-                            class="block text-xs uppercase tracking-widest mb-3 font-black font-mono"
-                            style="color: var(--t-ink-3)"
-                          >
-                            Data Source
-                          </span>
-                          <div class="text-sm leading-relaxed" style="color: var(--t-brand-strong)">
-                            Picked from a predefined list, or set freely with a custom
-                            <span class="glossary-inline-code">type</span> and
-                            <span class="glossary-inline-code">icon</span>.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              </div>
-            </article>
-          </div>
+          <div class="hl-empty-state"><p>No highlights at the moment.</p></div>
         </div>
       </div>
     </main>
