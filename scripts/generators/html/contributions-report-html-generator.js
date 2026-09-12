@@ -1,0 +1,184 @@
+const fs = require('fs/promises');
+const path = require('path');
+const prettier = require('prettier');
+const { dedent } = require('../../utils/dedent');
+const { GITHUB_USERNAME, BASE_DIR } = require('../../config/config');
+const {
+  createNavHtml,
+  createSkipToContentHtml,
+  createBackToTopHtml,
+  getBackToTopScript,
+  SHARED_CHROME_CSS,
+} = require('../../components/navbar');
+const { createFooterHtml } = require('../../components/footer');
+const { FAVICON_SVG_ENCODED } = require('../../config/constants');
+const { getReportsListStyleCss } = require('../css/style-generator');
+const { getThemeInitScript, getThemeStyleVariant } = require('../../components/theme-init');
+
+const HTML_OUTPUT_DIR_NAME = 'html-generated';
+const HTML_REPORTS_FILENAME = 'reports.html';
+
+// Supplements getReportsListStyleCss (shared, not owned by this generator)
+// with a token-only rule for the quarter card link background — the only
+// element on this page whose background wasn't already driven by the
+// details[open]/:not([open]) selectors in that shared stylesheet.
+const REPORTS_EXTRA_CSS = `
+  .rpt-card-link{background-color:var(--t-card)}
+  .rpt-stat{display:flex;flex-direction:column-reverse}
+  @media (prefers-reduced-motion: reduce) {
+    .report-card-link, details, summary { transition: none !important; }
+  }
+`;
+
+/**
+ * Calculates aggregate totals from all contribution data and writes the
+ * all-time contributions HTML report file.
+ * @param {Array<string>} quarterlyFileLinks List of relative paths (e.g., ['2023/Q4-2023.html', ...])
+ * to the generated quarterly files, provided by the quarterly generator.
+ */
+async function createHtmlReports(quarterlyFileLinks = []) {
+  const htmlBaseDir = path.join(BASE_DIR, HTML_OUTPUT_DIR_NAME);
+  const HTML_OUTPUT_PATH = path.join(htmlBaseDir, HTML_REPORTS_FILENAME);
+
+  // Ensure the output directory exists
+  await fs.mkdir(htmlBaseDir, { recursive: true });
+
+  // Generate the footer HTML and dynamic CSS
+  const footerHtml = createFooterHtml();
+  const reportsListCss = getReportsListStyleCss() + REPORTS_EXTRA_CSS;
+
+  // Generate the navbar with the correct relative path to root
+  const navHtml = createNavHtml('./');
+
+  // Generate Quarterly Links HTML
+  const sortedLinks = quarterlyFileLinks
+    .filter((link) => link && typeof link.path === 'string')
+    .sort((a, b) => {
+      if (a.path < b.path) return 1;
+      if (a.path > b.path) return -1;
+      return 0;
+    });
+
+  let linkHtml = '';
+
+  const linksByYear = {};
+
+  if (sortedLinks.length > 0) {
+    for (const link of sortedLinks) {
+      const relativePath = link.path;
+      const totalContributions = link.total;
+
+      const parts = path.dirname(relativePath).split(path.sep);
+      const year = parts[parts.length - 1];
+
+      const filename = path.basename(relativePath, '.html');
+      const [quarter] = filename.split('-');
+      const quarterText = quarter.replace('Q', 'Quarter ');
+
+      if (!linksByYear[year]) {
+        linksByYear[year] = [];
+      }
+
+      linksByYear[year].push({
+        relativePath,
+        quarterText,
+        totalContributions,
+      });
+    }
+
+    const sortedYears = Object.keys(linksByYear).sort().reverse();
+
+    let openAttribute = 'open';
+
+    for (const year of sortedYears) {
+      linkHtml += dedent`
+            <details ${openAttribute} class="col-span-full mb-8 border rounded-2xl overflow-hidden transition duration-300" style="border-color: var(--t-line);">
+                <summary style="color: var(--t-ink);" class="text-2xl font-bold p-6 cursor-pointer transition duration-150 flex items-center">
+                    <h2 class="m-0 text-2xl font-bold"><span class="mr-3" aria-hidden="true">📅</span> ${year} Reports</h2>
+                </summary>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-8">
+                `;
+
+      for (const link of linksByYear[year]) {
+        linkHtml += dedent`
+                <a href="./${link.relativePath}"
+                   style="border-color: var(--t-line);"
+                   class="report-card-link rpt-card-link border rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6">
+                    <h3 style="color: var(--t-brand);" class="m-0 text-sm font-semibold">${link.quarterText}</h3>
+                    <dl class="rpt-stat m-0 mt-1">
+                        <dd style="color: var(--t-ink);" class="text-3xl font-extrabold m-0">${link.totalContributions}</dd>
+                        <dt style="color: var(--t-ink-3);" class="text-xs font-normal">Total Contributions</dt>
+                    </dl>
+                </a>
+                `;
+      }
+
+      linkHtml += dedent`
+                </div>
+            </details>
+            `;
+
+      openAttribute = '';
+    }
+  } else {
+    linkHtml = `<p style="color: var(--t-ink-2);" class="p-12 text-center italic border-2 border-dashed rounded-2xl">No quarterly reports have been generated yet.</p>`;
+  }
+
+  const htmlContent = dedent`
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quarterly Reports | ${GITHUB_USERNAME} OSS Portfolio</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,${FAVICON_SVG_ENCODED}">
+  ${getThemeInitScript()}
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  ${getThemeStyleVariant()}
+  <style>
+    ${reportsListCss}
+    ${SHARED_CHROME_CSS}
+  </style>
+</head>
+<body style="background-color: var(--t-surface); color: var(--t-ink);" class="antialiased flex flex-col h-full min-h-full">
+${createSkipToContentHtml('main')}
+${navHtml}
+  <main id="main" class="grow w-full">
+    <div class="px-6 sm:px-12 lg:px-16 xl:px-32 py-10">
+      <div class="max-w-7xl mx-auto">
+        <header class="mt-16 mb-16">
+          <h1 style="color: var(--t-brand);" class="text-4xl sm:text-6xl font-black mb-6">
+            Quarterly Reports
+          </h1>
+          <p style="color: var(--t-ink-2);" class="text-xl max-w-2xl leading-relaxed">
+            Organized by calendar quarter, these reports track external open source involvement,
+            aggregating key community activities across all tracked repositories.
+          </p>
+        </header>
+
+        <section class="mt-4">
+          <div class="flex flex-col">
+            ${linkHtml}
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+  ${footerHtml}
+  ${createBackToTopHtml()}
+  ${getBackToTopScript()}
+</body>
+</html>
+`;
+
+  const formattedContent = await prettier.format(htmlContent, {
+    parser: 'html',
+  });
+
+  await fs.writeFile(HTML_OUTPUT_PATH, formattedContent, 'utf8');
+  console.log(`Written aggregate HTML report: ${HTML_OUTPUT_PATH}`);
+}
+
+module.exports = {
+  createHtmlReports,
+};
