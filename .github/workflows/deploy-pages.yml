@@ -1,0 +1,56 @@
+name: Deploy to GitHub Pages
+
+# ---------------------------------------------------------------------------
+# OPTIONAL — only needed if you publish your site with GitHub Pages.
+#
+# Using Netlify, Vercel or Cloudflare Pages instead? Delete this file. Those
+# hosts watch your repository and redeploy by themselves; all you do is point
+# them at the `contributions/html-generated/` folder.
+#
+# To use this workflow:
+#   1. Settings -> Pages -> "Source" -> select "GitHub Actions".
+#   2. Run "Update Contributions" once so there is a site to publish.
+# It then republishes automatically after every contributions update.
+# ---------------------------------------------------------------------------
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ['Update Contributions']
+    types:
+      - completed
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it midway.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Skip if the contributions update itself failed.
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload the generated site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: contributions/html-generated
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
