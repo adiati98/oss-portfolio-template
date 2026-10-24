@@ -1,0 +1,106 @@
+name: Update Contributions
+
+on:
+  workflow_dispatch:
+    inputs:
+      sync_mode:
+        description: 'daily = fetch recent activity, full = rebuild all history'
+        type: choice
+        options:
+          - daily
+          - full
+        default: daily
+
+  # -------------------------------------------------------------------------
+  # AUTOMATIC UPDATES (opt-in)
+  #
+  # Set your GitHub handle in `scripts/config/config.js` first, then remove the
+  # `#` from the four lines below to let this run on its own. Until then, use
+  # the "Run workflow" button on the Actions tab.
+  # -------------------------------------------------------------------------
+  # schedule:
+  #   # Monthly full sync at 00:01 UTC on the 1st of the month
+  #   - cron: '1 0 1 * *'
+  #   # Daily update at 01:00 UTC
+  #   - cron: '0 1 * * *'
+
+jobs:
+  run_scheduled_update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm' # Automatically handles node_modules caching
+
+      - name: Install dependencies
+        run: npm ci # Uses package-lock.json for exact versions
+
+      - name: Conditionally run full sync or daily update
+        run: |
+          # The monthly cron and the "full" button both mean: start over.
+          if [ "$SCHEDULE" = "1 0 1 * *" ] || [ "$REQUESTED" = "full" ]; then
+            echo "Running full sync..."
+            # Force the script to do a full run by deleting the cache files
+            rm -f data/all-contributions.json
+            rm -f data/commit-cache.json
+            rm -f data/pr-cache.json
+            node scripts/src/main.js
+          else
+            echo "Running daily update..."
+            # Run the script incrementally, relying on existing data files
+            node scripts/src/main.js
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SCHEDULE: ${{ github.event.schedule }}
+          REQUESTED: ${{ inputs.sync_mode }}
+
+      - name: Format generated files
+        run: npm run format
+
+      - name: Commit and push changes
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Add the generated files to the staging area
+          git add contributions/markdown-generated/ contributions/html-generated/ data/
+
+          # Check if there are any changes to commit
+          if ! git diff --staged --quiet; then
+            # Use a different commit message based on the update type
+            if [ "$SCHEDULE" = "1 0 1 * *" ] || [ "$REQUESTED" = "full" ]; then
+                git commit -m "docs: Full contributions sync [skip ci]"
+            else
+                git commit -m "docs: Daily contributions update [skip ci]"
+            fi
+            git push
+            # Signal that a push occurred
+            echo "pushed=true" >> $GITHUB_OUTPUT
+          else
+            echo "No changes to commit"
+            # Signal no push occurred
+            echo "pushed=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          SCHEDULE: ${{ github.event.schedule }}
+          REQUESTED: ${{ inputs.sync_mode }}
+
+      # -----------------------------------------------------------------------
+      # PUBLISHING A WEBSITE (OPTIONAL)
+      #
+      # You do NOT need to add anything here for most hosts. Netlify, Vercel and
+      # Cloudflare Pages watch your repository and redeploy on their own — just
+      # point them at the `contributions/html-generated/` folder.
+      #
+      # For GitHub Pages, use the included `deploy-pages.yml` workflow instead.
+      # See the "Publishing the Static Website" section of the README.
+      # -----------------------------------------------------------------------
