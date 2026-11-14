@@ -1,0 +1,146 @@
+name: Demo Site
+
+# ---------------------------------------------------------------------------
+# MAINTAINER-ONLY WORKFLOW — safe to delete in your own copy.
+#
+# This rebuilds the public demo at https://adiati98.github.io/oss-portfolio-template/
+# It never runs anywhere except the original repository (see the `if:` below),
+# and `npm run clean` deletes it for you on first setup.
+#
+# How it works: every run throws the `demo` branch away and rebuilds it from
+# `main`, so the demo always shows the latest code and design without anyone
+# maintaining a second branch by hand. The only thing carried across from the
+# previous run is `data/`, which is what keeps the daily API cost small.
+# ---------------------------------------------------------------------------
+
+on:
+  schedule:
+    # Daily incremental rebuild at 01:00 UTC
+    - cron: '0 1 * * *'
+    # Monthly full rebuild at 00:01 UTC on the 1st
+    - cron: '1 0 1 * *'
+  workflow_dispatch:
+    inputs:
+      sync_mode:
+        description: 'daily = fetch recent activity, full = rebuild all history'
+        type: choice
+        options:
+          - daily
+          - full
+        default: daily
+
+permissions:
+  contents: write # force-push the rebuilt demo branch
+  pages: write # publish to GitHub Pages
+  id-token: write # required by actions/deploy-pages
+
+# Never let two rebuilds race each other onto the same branch.
+concurrency:
+  group: demo-site
+  cancel-in-progress: false
+
+env:
+  DEMO_USERNAME: adiati98
+
+jobs:
+  rebuild:
+    # Hard guard: forks and template copies can never trigger this.
+    if: github.repository == 'adiati98/oss-portfolio-template'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Determine sync mode
+        id: mode
+        env:
+          SCHEDULE: ${{ github.event.schedule }}
+          REQUESTED: ${{ inputs.sync_mode }}
+        run: |
+          if [ "$SCHEDULE" = "1 0 1 * *" ] || [ "$REQUESTED" = "full" ]; then
+            echo "mode=full" >> "$GITHUB_OUTPUT"
+            echo "Full sync: rebuilding the entire contribution history."
+          else
+            echo "mode=daily" >> "$GITHUB_OUTPUT"
+            echo "Daily sync: reusing existing data and fetching recent activity."
+          fi
+
+      - name: Carry data forward from the current demo branch
+        run: |
+          # A daily run is only cheap because the script can see what it already
+          # knows, so the whole cache comes along. data/highlights.json is
+          # hand-curated content, not cache — it survives every mode, full
+          # sync included.
+          if git fetch --depth=1 origin demo; then
+            if [ "${{ steps.mode.outputs.mode }}" = "daily" ]; then
+              git checkout FETCH_HEAD -- data/ && echo "Restored data/ from demo."
+            else
+              git checkout FETCH_HEAD -- data/highlights.json 2>/dev/null &&
+                echo "Restored data/highlights.json from demo." ||
+                echo "No data/highlights.json on demo yet."
+            fi
+          else
+            echo "No demo branch yet — this run will fetch from scratch."
+          fi
+
+      - name: Clear cache for a full rebuild
+        if: steps.mode.outputs.mode == 'full'
+        # -not -name excludes highlights.json: it's curated content, not
+        # cache, and a full sync shouldn't wipe it.
+        run: find data -maxdepth 1 -name '*.json' -not -name 'highlights.json' -delete
+
+      - name: Point the demo at the showcase account
+        run: |
+          sed -i "s/^const GITHUB_USERNAME = .*/const GITHUB_USERNAME = '$DEMO_USERNAME';/" \
+            scripts/config/config.js
+          # Fail loudly if config.js is ever reworded and the edit silently misses.
+          grep -q "const GITHUB_USERNAME = '$DEMO_USERNAME';" scripts/config/config.js
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate the portfolio
+        run: node scripts/src/main.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Format generated files
+        run: npm run format
+
+      - name: Rebuild the demo branch
+        env:
+          MODE: ${{ steps.mode.outputs.mode }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # An orphan branch has no parent, so the demo branch is replaced
+          # outright rather than accumulating a history nobody reads.
+          git checkout --orphan demo-rebuild
+          git add -A
+          git commit -m "chore: rebuild demo from main ($MODE sync) [skip ci]"
+          git push --force origin demo-rebuild:demo
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload the generated site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: contributions/html-generated
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
